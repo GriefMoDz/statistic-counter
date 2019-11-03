@@ -1,0 +1,18 @@
+{
+  "id": "xyz.griefmodz.StatisticCounter",
+  "name": "Statistic Counter",
+  "description": "A Replugged plug-in that has been ported from Powercord which introduces an interchangeable statistic counter in-between the home button and servers list.",
+  "author": {
+    "name": "M'Harley",
+    "discordID": "350227339784880130",
+    "github": "griefmodz"
+  },
+  "version": "1.0.0",
+  "updater": {
+    "type": "github",
+    "id": "griefmodz/statistic-counter"
+  },
+  "license": "OSL-3.0",
+  "type": "replugged-plugin",
+  "renderer": "src/index.tsx"
+}

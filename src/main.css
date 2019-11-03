@@ -1,0 +1,31 @@
+.statistic-counter {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 13px;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: normal;
+  width: 70px;
+  word-wrap: normal;
+  color: var(--channels-default);
+}
+
+.statistic-counter .clickable {
+  cursor: pointer;
+}
+
+.statistic-counter .clickable:active {
+  color: var(--interactive-active);
+}
+
+.statistic-counter .clickable:hover {
+  color: var(--interactive-hover);
+}
+
+.statistic-counter-list-item {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+  position: relative;
+  width: 72px;
+}
