@@ -1,10 +1,9 @@
 const { Plugin } = require('powercord/entities');
-const { React, Flux, getModule, getModuleByDisplayName, constants } = require('powercord/webpack');
-const { forceUpdateElement } = require('powercord/util');
+const { React, Flux, getModule, getModuleByDisplayName, contextMenu } = require('powercord/webpack');
+const { forceUpdateElement, getOwnerInstance } = require('powercord/util');
 const { inject, uninject } = require('powercord/injector');
-const { AsyncComponent } = require('powercord/components');
-
-const Clickable = AsyncComponent.from(getModuleByDisplayName('Clickable'));
+const { Clickable } = require('powercord/components');
+const { constants, constants: { Stores } } = require('./core');
 
 class OnlineFriends extends Plugin {
   constructor () {
@@ -15,58 +14,36 @@ class OnlineFriends extends Plugin {
     };
   }
 
-  get relationshipTypes () {
-    const relationTypes = {};
-
-    for (const type in constants.RelationshipTypes) {
-      relationTypes[constants.RelationshipTypes[type]] = type;
-    }
-
-    return relationTypes;
-  }
-
-  get relationshipCounts () {
-    const relationCounts = {};
-    const relationshipStore = getModule([ 'getRelationships' ], false);
-
-    for (const type in this.relationshipTypes) {
-      relationCounts[this.relationshipTypes[type]] = 0;
-    }
-
-    for (const id in relationshipStore.getRelationships()) {
-      relationCounts[this.relationshipTypes[relationshipStore.getRelationships()[id]]]++;
-    }
-
-    return relationCounts;
-  }
-
-  get guildCount () {
-    const guildStore = getModule([ 'getGuilds' ], false);
-
-    return Object.keys(guildStore.getGuilds()).length;
-  }
-
   async startPlugin () {
     this.loadCSS(require('path').resolve(__dirname, 'style.css'));
+    this.utils = require('./core/utils')(this);
     this.classes = {
       ...await getModule([ 'wrapper', 'unreadMentionsBar' ]),
       ...await getModule([ 'guildSeparator', 'listItem' ])
     };
 
+    await this._importStores();
     this._patchGuildsComponent();
   }
 
   pluginWillUnload () {
     uninject('onlineFriends-FriendCount');
+
+    const scroller = getOwnerInstance(document.querySelector(`.${this.classes.guildSeparator}`));
+    const guildSeparator = scroller.props.children.find(child => child._oldType);
+    if (guildSeparator) {
+      guildSeparator.type = guildSeparator._oldType;
+
+      delete guildSeparator._oldType;
+    }
+
     forceUpdateElement(`.${this.classes.wrapper.split(' ')[0]}`);
   }
 
   async _patchGuildsComponent () {
-    const statusStore = await getModule([ 'getStatus', 'getOnlineFriendCount' ]);
-    const relationshipStore = await getModule([ 'getRelationships' ]);
     const FriendsOnline = Flux.connectStores(
-      [ statusStore ],
-      () => ({ friendCount: statusStore.getOnlineFriendCount() })
+      [ constants.StatusStore ],
+      () => ({ friendCount: constants.StatusStore.getOnlineFriendCount() })
     )(this._renderFriendsCount.bind(this));
 
     const Guilds = await getModuleByDisplayName('Guilds');
@@ -76,21 +53,33 @@ class OnlineFriends extends Plugin {
 
       if (connectedUnreadDMs) {
         const { children } = scroller.props;
-        const relationTypes = {
+        const types = {
           1: 'FRIEND',
           2: 'PENDING_INCOMING',
           3: 'BLOCKED'
         };
 
         const ExtendedCount = Flux.connectStores(
-          [ relationshipStore ], () => ({
-            extendedCount: relationTypes[this.state.type] ? this.relationshipCounts[relationTypes[this.state.type]] : this.guildCount
+          [ this.state.type !== 4 ? constants.RelationshipStore : constants.GuildStore ], () => ({
+            extendedCount: types[this.state.type] ? this.utils.relationshipCounts[types[this.state.type]] : this.utils.guildCount
           })
         )(this._renderExtendedCount.bind(this));
 
-        children.splice(children.indexOf(connectedUnreadDMs), 0, this.state.type > 0
-          ? React.createElement(ExtendedCount)
-          : React.createElement(FriendsOnline));
+        const guildSeparator = children[children.indexOf(connectedUnreadDMs) + 2];
+        if (!guildSeparator._oldType) {
+          guildSeparator._oldType = guildSeparator.type;
+        }
+
+        guildSeparator.type = () =>
+          React.createElement('div', {
+            className: this.classes.listItem
+          }, this.state.type > 0
+            ? React.createElement(ExtendedCount)
+            : React.createElement(FriendsOnline),
+          React.createElement('div', {
+            className: this.classes.guildSeparator,
+            style: { marginTop: '20px' }
+          }));
       }
 
       return res;
@@ -100,8 +89,8 @@ class OnlineFriends extends Plugin {
   }
 
   _onClickHandler () {
-    this.state.type++;
-    this.state.type = this.state.type % 5;
+    this.utils.skipFilteredCounters();
+    this.state.type = this.state.type % Object.keys(constants.Types).length;
 
     const counter = document.querySelector('.onlineFriends-friendsOnline');
     if (counter) {
@@ -115,20 +104,30 @@ class OnlineFriends extends Plugin {
     forceUpdateElement(`.${this.classes.wrapper.split(' ')[0]}`);
   }
 
+  _onContextMenuHandler (e) {
+    const CountersContextMenu = require('./components/ContextMenu');
+
+    contextMenu.openContextMenu(e, () =>
+      React.createElement(CountersContextMenu, {
+        counterTypes: constants.Types,
+        main: this
+      })
+    );
+  }
+
   _createCounter (value) {
     return React.createElement(Clickable, {
-      className: this.classes.listItem,
-      onClick: this._onClickHandler.bind(this)
-    }, React.createElement('div', {
       className: 'onlineFriends-friendsOnline',
+      onClick: this._onClickHandler.bind(this),
+      onContextMenu: this._onContextMenuHandler.bind(this),
       style: {
         cursor: 'pointer'
       }
-    }, value));
+    }, value);
   }
 
   _renderExtendedCount ({ extendedCount }) {
-    const types = OnlineFriends.Types;
+    const types = constants.Types;
     const type = Object.keys(types)[Object.values(types).indexOf(this.state.type)];
 
     return this._createCounter(`${extendedCount <= 9999 ? extendedCount : '9999+'} ${type}`);
@@ -137,13 +136,12 @@ class OnlineFriends extends Plugin {
   _renderFriendsCount ({ friendCount }) {
     return this._createCounter(`${friendCount <= 9999 ? friendCount : '9999+'} Online`);
   }
-}
 
-OnlineFriends.Types = {
-  Friends: 1,
-  Pending: 2,
-  Blocked: 3,
-  Guilds: 4
-};
+  async _importStores () {
+    for (const store in Stores) {
+      await this.utils.import(store, Stores[store]);
+    }
+  }
+}
 
 module.exports = OnlineFriends;
