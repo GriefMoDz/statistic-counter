@@ -1,6 +1,6 @@
 const { Plugin } = require('powercord/entities');
 const { React, Flux, getModule, getModuleByDisplayName, contextMenu } = require('powercord/webpack');
-const { forceUpdateElement, getOwnerInstance } = require('powercord/util');
+const { forceUpdateElement, getOwnerInstance, waitFor } = require('powercord/util');
 const { inject, uninject } = require('powercord/injector');
 const { Clickable } = require('powercord/components');
 const { constants, constants: { Stores } } = require('./core');
@@ -46,8 +46,8 @@ class OnlineFriends extends Plugin {
       () => ({ friendCount: constants.StatusStore.getOnlineFriendCount() })
     )(this._renderFriendsCount.bind(this));
 
-    const Guilds = await getModuleByDisplayName('Guilds');
-    inject('onlineFriends-FriendCount', Guilds.prototype, 'render', (_, res) => {
+    const instance = getOwnerInstance(await waitFor(`.${this.classes.wrapper.split(' ')[0]}`));
+    inject('onlineFriends-FriendCount', instance.__proto__, 'render', (_, res) => {
       const scroller = res.props.children.find(child => child.type && child.type.displayName === 'VerticalScroller');
       const connectedUnreadDMs = scroller.props.children.find(child => child.type && child.type.displayName === 'ConnectedUnreadDMs');
 
@@ -85,7 +85,7 @@ class OnlineFriends extends Plugin {
       return res;
     });
 
-    forceUpdateElement(`.${this.classes.wrapper.split(' ')[0]}`);
+    instance.forceUpdate();
   }
 
   _onClickHandler () {
