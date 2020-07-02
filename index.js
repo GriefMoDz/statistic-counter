@@ -48,7 +48,7 @@ class OnlineFriends extends Plugin {
 
     const instance = getOwnerInstance(await waitFor(`.${this.classes.wrapper.split(' ')[0]}`));
     inject('onlineFriends-FriendCount', instance.__proto__, 'render', (_, res) => {
-      const scroller = res.props.children.find(child => child.type && child.type.displayName === 'VerticalScroller');
+      const scroller = res.props.children.find(child => child.props && child.props.className && child.props.className.includes('scroller'));
       const connectedUnreadDMs = scroller.props.children.find(child => child.type && child.type.displayName === 'ConnectedUnreadDMs');
 
       if (connectedUnreadDMs) {
