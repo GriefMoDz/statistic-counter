@@ -1,5 +1,5 @@
 const { Plugin } = require('powercord/entities');
-const { React, Flux, getModule, getModuleByDisplayName, contextMenu } = require('powercord/webpack');
+const { React, Flux, getModule, contextMenu } = require('powercord/webpack');
 const { forceUpdateElement, getOwnerInstance, waitFor } = require('powercord/util');
 const { inject, uninject } = require('powercord/injector');
 const { Clickable } = require('powercord/components');
@@ -15,7 +15,7 @@ class OnlineFriends extends Plugin {
   }
 
   async startPlugin () {
-    this.loadCSS(require('path').resolve(__dirname, 'style.css'));
+    this.loadStylesheet('style.css');
     this.utils = require('./core/utils')(this);
     this.classes = {
       ...await getModule([ 'wrapper', 'unreadMentionsBar' ]),
