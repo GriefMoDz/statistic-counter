@@ -1,12 +1,7 @@
 /* eslint-disable object-property-newline */
 const { Plugin } = require('powercord/entities');
-const { React, getModule, contextMenu } = require('powercord/webpack');
 const { forceUpdateElement } = require('powercord/util');
 const { inject, uninject } = require('powercord/injector');
-
-const FriendCount = require('./components/FriendCount');
-const ExtendedCount = require('./components/ExtendedCount');
-const ContextMenu = require('./components/ContextMenu');
 
 const counterStore = require('./counterStore');
 
