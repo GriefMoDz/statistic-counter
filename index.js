@@ -1,147 +1,92 @@
+/* eslint-disable object-property-newline */
 const { Plugin } = require('powercord/entities');
-const { React, Flux, getModule, getModuleByDisplayName, contextMenu } = require('powercord/webpack');
-const { forceUpdateElement, getOwnerInstance } = require('powercord/util');
+const { React, getModule, contextMenu } = require('powercord/webpack');
+const { forceUpdateElement } = require('powercord/util');
 const { inject, uninject } = require('powercord/injector');
-const { Clickable } = require('powercord/components');
-const { constants, constants: { Stores } } = require('./core');
 
-class OnlineFriends extends Plugin {
+const FriendCount = require('./components/FriendCount');
+const ExtendedCount = require('./components/ExtendedCount');
+const ContextMenu = require('./components/ContextMenu');
+
+const counterStore = require('./counterStore');
+
+module.exports = class OnlineFriendsCount extends Plugin {
   constructor () {
     super();
 
-    this.state = {
-      type: 0
+    this.state = { autoRotation: null, autoRotationPaused: false };
+    this.classes = {
+      ...getModule([ 'guildSeparator', 'listItem' ], false),
+      tutorialContainer: (getModule([ 'homeIcon', 'downloadProgress' ], false)).tutorialContainer
     };
+  }
+
+  get counter () {
+    let counter = counterStore.store.getActiveCounter();
+    switch (counter) {
+      case 'FRIEND_COUNT': counter = FriendCount; break;
+      case 'EXTENDED_COUNT': counter = ExtendedCount;
+    }
+    return counter;
   }
 
   async startPlugin () {
-    this.loadCSS(require('path').resolve(__dirname, 'style.css'));
-    this.utils = require('./core/utils')(this);
-    this.classes = {
-      ...await getModule([ 'wrapper', 'unreadMentionsBar' ]),
-      ...await getModule([ 'guildSeparator', 'listItem' ])
-    };
+    this.loadStylesheet('./style.css');
 
-    await this._importStores();
-    this._patchGuildsComponent();
-  }
+    const { DefaultHomeButton } = await getModule([ 'DefaultHomeButton' ]);
+    inject('onlineFriendsCount-counter', DefaultHomeButton.prototype, 'render', (_, res) => {
+      // this.debug('onlineFriendsCount-counter -> render', res);
 
-  pluginWillUnload () {
-    uninject('onlineFriends-FriendCount');
-
-    const scroller = getOwnerInstance(document.querySelector(`.${this.classes.guildSeparator}`));
-    const guildSeparator = scroller.props.children.find(child => child._oldType);
-    if (guildSeparator) {
-      guildSeparator.type = guildSeparator._oldType;
-
-      delete guildSeparator._oldType;
-    }
-
-    forceUpdateElement(`.${this.classes.wrapper.split(' ')[0]}`);
-  }
-
-  async _patchGuildsComponent () {
-    const FriendsOnline = Flux.connectStores(
-      [ constants.StatusStore ],
-      () => ({ friendCount: constants.StatusStore.getOnlineFriendCount() })
-    )(this._renderFriendsCount.bind(this));
-
-    const Guilds = await getModuleByDisplayName('Guilds');
-    inject('onlineFriends-FriendCount', Guilds.prototype, 'render', (_, res) => {
-      const scroller = res.props.children.find(child => child.type && child.type.displayName === 'VerticalScroller');
-      const connectedUnreadDMs = scroller.props.children.find(child => child.type && child.type.displayName === 'ConnectedUnreadDMs');
-
-      if (connectedUnreadDMs) {
-        const { children } = scroller.props;
-        const types = {
-          1: 'FRIEND',
-          2: 'PENDING_INCOMING',
-          3: 'BLOCKED'
-        };
-
-        const ExtendedCount = Flux.connectStores(
-          [ this.state.type !== 4 ? constants.RelationshipStore : constants.GuildStore ], () => ({
-            extendedCount: types[this.state.type] ? this.utils.relationshipCounts[types[this.state.type]] : this.utils.guildCount
-          })
-        )(this._renderExtendedCount.bind(this));
-
-        const guildSeparator = children[children.indexOf(connectedUnreadDMs) + 2];
-        if (!guildSeparator._oldType) {
-          guildSeparator._oldType = guildSeparator.type;
-        }
-
-        guildSeparator.type = () =>
-          React.createElement('div', {
-            className: this.classes.listItem
-          }, this.state.type > 0
-            ? React.createElement(ExtendedCount)
-            : React.createElement(FriendsOnline),
-          React.createElement('div', {
-            className: this.classes.guildSeparator,
-            style: { marginTop: '20px' }
-          }));
+      if (!Array.isArray(res)) {
+        res = [ res ];
       }
+
+      res.push(React.createElement('div', {
+        className: this.classes.listItem,
+        onContextMenu: this.handleContextMenu.bind(this),
+        onMouseOver: () => this.setAutoRotationPaused(true),
+        onMouseOut: () => this.setAutoRotationPaused(false)
+      }, React.createElement(this.counter, {
+        clickable: counterStore.store.getFilteredExtendedCounters().length > 0,
+        forceUpdateHomeButton: this.forceUpdateHomeButton.bind(this),
+        invokeAutoRotation: this.handleAutoRotation.bind(this)
+      })));
 
       return res;
     });
 
-    forceUpdateElement(`.${this.classes.wrapper.split(' ')[0]}`);
+    this.forceUpdateHomeButton();
   }
 
-  _onClickHandler () {
-    this.utils.skipFilteredCounters();
-    this.state.type = this.state.type % Object.keys(constants.Types).length;
-
-    const counter = document.querySelector('.onlineFriends-friendsOnline');
-    if (counter) {
-      counter.style.animation = 'none';
-
-      setTimeout(() => {
-        counter.style.animation = null;
-      }, 100);
-    }
-
-    forceUpdateElement(`.${this.classes.wrapper.split(' ')[0]}`);
+  pluginWillUnload () {
+    uninject('onlineFriendsCount-counter');
+    this.forceUpdateHomeButton();
   }
 
-  _onContextMenuHandler (e) {
-    const CountersContextMenu = require('./components/ContextMenu');
-
-    contextMenu.openContextMenu(e, () =>
-      React.createElement(CountersContextMenu, {
-        counterTypes: constants.Types,
-        main: this
-      })
-    );
+  forceUpdateHomeButton () {
+    forceUpdateElement(`.${this.classes.tutorialContainer}`);
   }
 
-  _createCounter (value) {
-    return React.createElement(Clickable, {
-      className: 'onlineFriends-friendsOnline',
-      onClick: this._onClickHandler.bind(this),
-      onContextMenu: this._onContextMenuHandler.bind(this),
-      style: {
-        cursor: 'pointer'
-      }
-    }, value);
+  setAutoRotationPaused (state) {
+    this.state.autoRotationPaused = state;
+    return this.forceUpdateHomeButton();
   }
 
-  _renderExtendedCount ({ extendedCount }) {
-    const types = constants.Types;
-    const type = Object.keys(types)[Object.values(types).indexOf(this.state.type)];
-
-    return this._createCounter(`${extendedCount <= 9999 ? extendedCount : '9999+'} ${type}`);
+  handleContextMenu (e) {
+    contextMenu.openContextMenu(e, () => React.createElement(ContextMenu, { main: this }));
   }
 
-  _renderFriendsCount ({ friendCount }) {
-    return this._createCounter(`${friendCount <= 9999 ? friendCount : '9999+'} Online`);
-  }
+  handleAutoRotation (rotateCounter) {
+    const extendedCounts = counterStore.store.getFilteredExtendedCounters().length;
 
-  async _importStores () {
-    for (const store in Stores) {
-      await this.utils.import(store, Stores[store]);
+    clearInterval(this.state.autoRotation);
+
+    if (this.settings.get('autoRotation', false) && extendedCounts > 0 && !this.state.autoRotationPaused) {
+      this.state.autoRotation = setInterval(() => {
+        rotateCounter();
+      }, this.settings.get('autoRotationDelay', 3e4));
+    } else {
+      this.state.autoRotation = null;
     }
   }
-}
-
-module.exports = OnlineFriends;
+};
