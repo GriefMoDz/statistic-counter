@@ -8,7 +8,7 @@
   white-space: normal;
   width: 64px;
   word-wrap: normal;
-  color: hsla(0, 0%, 100%, .3);
+  color: var(--text-muted);
 }
 
 .onlineFriends-friendCount.clickable, .onlineFriends-extendedCount.clickable {
