@@ -1,5 +1,5 @@
 
-.onlineFriends-friendCount, .onlineFriends-extendedCount {
+.onlineFriends-counter {
   font-size: 10px;
   font-weight: 500;
   line-height: 1.3;
@@ -11,10 +11,14 @@
   color: var(--text-muted);
 }
 
-.onlineFriends-friendCount.clickable, .onlineFriends-extendedCount.clickable {
+.onlineFriends-counter.clickable {
   cursor: pointer;
 }
 
-.onlineFriends-friendCount.clickable:hover, .onlineFriends-extendedCount.clickable:hover {
+.onlineFriends-counter.clickable:active {
+  color: var(--interactive-active);
+}
+
+.onlineFriends-counter.clickable:hover {
   color: var(--interactive-hover);
 }

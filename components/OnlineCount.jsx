@@ -1,7 +1,7 @@
 const { React, Flux, getModule, i18n: { Messages } } = require('powercord/webpack');
 const counterStore = require('../counterStore');
 
-class FriendCount extends React.PureComponent {
+class OnlineCount extends React.PureComponent {
   constructor (props) {
     super(props);
 
@@ -16,13 +16,14 @@ class FriendCount extends React.PureComponent {
 
     const friendsOnline = this.props.onlineFriendCount;
     return React.createElement('div', {
-      className: [ 'onlineFriends-friendCount', this.props.clickable && 'clickable' ].filter(Boolean).join(' '),
+      id: 'online-count',
+      className: [ 'onlineFriends-counter', this.props.clickable && 'clickable' ].filter(Boolean).join(' '),
       onClick: this.props.clickable && this.handleClick
-    }, `${friendsOnline} ${Messages.STATUS_ONLINE}`);
+    }, `${Messages.STATUS_ONLINE} — ${friendsOnline}`);
   }
 }
 
 module.exports = Flux.connectStoresAsync(
   [ getModule([ 'initialize', 'getStatus' ]) ],
   ([ statusStore ]) => ({ onlineFriendCount: statusStore.getOnlineFriendCount() })
-)(FriendCount);
+)(OnlineCount);

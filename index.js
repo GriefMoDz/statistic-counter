@@ -4,7 +4,7 @@ const { React, getModule, contextMenu } = require('powercord/webpack');
 const { forceUpdateElement } = require('powercord/util');
 const { inject, uninject } = require('powercord/injector');
 
-const FriendCount = require('./components/FriendCount');
+const OnlineCount = require('./components/OnlineCount');
 const ExtendedCount = require('./components/ExtendedCount');
 const ContextMenu = require('./components/ContextMenu');
 
@@ -24,7 +24,7 @@ module.exports = class OnlineFriendsCount extends Plugin {
   get counter () {
     let counter = counterStore.store.getActiveCounter();
     switch (counter) {
-      case 'FRIEND_COUNT': counter = FriendCount; break;
+      case 'ONLINE_COUNT': counter = OnlineCount; break;
       case 'EXTENDED_COUNT': counter = ExtendedCount;
     }
     return counter;
@@ -35,8 +35,6 @@ module.exports = class OnlineFriendsCount extends Plugin {
 
     const { DefaultHomeButton } = await getModule([ 'DefaultHomeButton' ]);
     inject('onlineFriendsCount-counter', DefaultHomeButton.prototype, 'render', (_, res) => {
-      // this.debug('onlineFriendsCount-counter -> render', res);
-
       if (!Array.isArray(res)) {
         res = [ res ];
       }
@@ -44,8 +42,8 @@ module.exports = class OnlineFriendsCount extends Plugin {
       res.push(React.createElement('div', {
         className: this.classes.listItem,
         onContextMenu: this.handleContextMenu.bind(this),
-        onMouseOver: () => this.setAutoRotationPaused(true),
-        onMouseOut: () => this.setAutoRotationPaused(false)
+        onMouseEnter: () => this.setAutoRotationPaused(true),
+        onMouseLeave: () => this.setAutoRotationPaused(false)
       }, React.createElement(this.counter, {
         clickable: counterStore.store.getFilteredExtendedCounters().length > 0,
         forceUpdateHomeButton: this.forceUpdateHomeButton.bind(this),

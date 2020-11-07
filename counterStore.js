@@ -1,7 +1,8 @@
+/* eslint-disable object-property-newline */
 const { Flux, FluxDispatcher } = require('powercord/webpack');
 
 const CounterTypes = Object.freeze({
-  FRIEND_COUNT: 'FRIEND_COUNT',
+  ONLINE_COUNT: 'ONLINE_COUNT',
   EXTENDED_COUNT: 'EXTENDED_COUNT'
 });
 
@@ -12,11 +13,15 @@ const ExtendedCounterTypes = Object.freeze({
   GUILDS: 'GUILDS'
 });
 
-let activeCounter = CounterTypes.FRIEND_COUNT;
+let activeCounter = CounterTypes.ONLINE_COUNT;
 let activeExtendedCounter;
 class CounterStore extends Flux.Store {
   get CounterTypes () {
     return CounterTypes;
+  }
+
+  get ExtendedCounterTypes () {
+    return ExtendedCounterTypes;
   }
 
   getStore () {
@@ -32,7 +37,7 @@ class CounterStore extends Flux.Store {
   }
 
   getActiveCounter () {
-    return this.getFilteredExtendedCounters().length > 0 ? activeCounter : 'FRIEND_COUNT';
+    return this.getFilteredExtendedCounters().length > 0 ? activeCounter : 'ONLINE_COUNT';
   }
 
   getActiveExtendedCounter () {

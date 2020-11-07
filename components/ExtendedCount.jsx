@@ -33,7 +33,7 @@ class ExtendedCount extends React.PureComponent {
       if (nextCounter) {
         this.setState({ activeCounter: nextCounter });
       } else {
-        counterStore.setActiveCounter('FRIEND_COUNT');
+        counterStore.setActiveCounter('ONLINE_COUNT');
       }
 
       props.forceUpdateHomeButton();
@@ -52,9 +52,10 @@ class ExtendedCount extends React.PureComponent {
     }
 
     return React.createElement('div', {
-      className: [ 'onlineFriends-extendedCount', this.props.clickable && 'clickable' ].filter(Boolean).join(' '),
+      id: `extended-count-${(translationKey || activeExtendedCount).toLowerCase()}`,
+      className: [ 'onlineFriends-counter', this.props.clickable && 'clickable' ].filter(Boolean).join(' '),
       onClick: this.props.clickable && this.handleClick
-    }, `${this.props.extendedCounts[activeExtendedCount]} ${Messages[translationKey || activeExtendedCount]}`);
+    }, `${Messages[translationKey || activeExtendedCount]} — ${this.props.extendedCounts[activeExtendedCount]}`);
   }
 }
 
