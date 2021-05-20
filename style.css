@@ -6,7 +6,7 @@
   text-align: center;
   text-transform: uppercase;
   white-space: normal;
-  width: 64px;
+  width: 62px;
   word-wrap: normal;
   color: var(--text-muted);
 }
@@ -21,4 +21,8 @@
 
 .onlineFriends-counter.clickable:hover {
   color: var(--interactive-hover);
+}
+
+#onlineFriends-context-menu {
+  z-index: 0;
 }

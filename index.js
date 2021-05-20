@@ -33,8 +33,8 @@ module.exports = class OnlineFriendsCount extends Plugin {
   async startPlugin () {
     this.loadStylesheet('./style.css');
 
-    const { DefaultHomeButton } = await getModule([ 'DefaultHomeButton' ]);
-    inject('onlineFriendsCount-counter', DefaultHomeButton.prototype, 'render', (_, res) => {
+    const HomeButtonsModule = await getModule([ 'DefaultHomeButton' ]);
+    inject('onlineFriendsCount-counter', HomeButtonsModule, 'DefaultHomeButton', (_, res) => {
       if (!Array.isArray(res)) {
         res = [ res ];
       }
