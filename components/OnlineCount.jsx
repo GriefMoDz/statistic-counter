@@ -23,7 +23,11 @@ class OnlineCount extends React.PureComponent {
   }
 }
 
-module.exports = Flux.connectStoresAsync(
-  [ getModule([ 'initialize', 'getStatus' ]) ],
-  ([ statusStore ]) => ({ onlineFriendCount: statusStore.getOnlineFriendCount() })
+const statusStore = getModule([ 'initialize', 'isMobileOnline' ], false);
+const relationshipStore = getModule([ 'initialize', 'getRelationships' ], false);
+module.exports = Flux.connectStores(
+  [ relationshipStore, statusStore ],
+  () => ({
+    onlineFriendCount: relationshipStore?.getFriendIDs().filter(id => statusStore?.getStatus(id) !== 'offline').length
+  })
 )(OnlineCount);
