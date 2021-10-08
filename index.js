@@ -40,32 +40,20 @@ module.exports = class OnlineFriendsCount extends Plugin {
 
     const DefaultHomeButton = await getModule(m => getDefaultMethodByKeyword(m, 'showDMsOnly'));
     inject('onlineFriendsCount-counter', DefaultHomeButton, 'default', (_, res) => {
-      const oldMethod = res.type;
+      if (!Array.isArray(res)) {
+        res = [ res ];
+      }
 
-      res.type = (props) => {
-        props.user = '0';
-
-        let res = oldMethod(props);
-
-        if (!Array.isArray(res)) {
-          res = [ res ];
-        }
-
-        res.push(React.createElement('div', {
-          className: this.classes.listItem,
-          onContextMenu: this.handleContextMenu.bind(this),
-          onMouseEnter: () => this.setAutoRotationPaused(true),
-          onMouseLeave: () => this.setAutoRotationPaused(false)
-        }, React.createElement(this.counter, {
-          clickable: counterStore.store.getFilteredExtendedCounters().length > 0,
-          forceUpdateHomeButton: this.forceUpdateHomeButton.bind(this),
-          invokeAutoRotation: this.handleAutoRotation.bind(this)
-        })));
-
-        return res;
-      };
-
-      Object.assign(res.type, oldMethod);
+      res.push(React.createElement('div', {
+        className: this.classes.listItem,
+        onContextMenu: this.handleContextMenu.bind(this),
+        onMouseEnter: () => this.setAutoRotationPaused(true),
+        onMouseLeave: () => this.setAutoRotationPaused(false)
+      }, React.createElement(this.counter, {
+        clickable: counterStore.store.getFilteredExtendedCounters().length > 0,
+        forceUpdateHomeButton: this.forceUpdateHomeButton.bind(this),
+        invokeAutoRotation: this.handleAutoRotation.bind(this)
+      })));
 
       return res;
     });
