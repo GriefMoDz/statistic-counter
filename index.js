@@ -16,7 +16,7 @@ module.exports = class OnlineFriendsCount extends Plugin {
 
     this.state = { autoRotation: null, autoRotationPaused: false };
     this.classes = {
-      ...getModule([ 'tutorialContainer', 'listItem' ], false),
+      ...getModule([ 'guildSeparator', 'listItem' ], false),
       tutorialContainer: (getModule([ 'homeIcon', 'downloadProgress' ], false)).tutorialContainer
     };
   }
@@ -33,9 +33,13 @@ module.exports = class OnlineFriendsCount extends Plugin {
   async startPlugin () {
     this.loadStylesheet('./style.css');
 
-    const HomeButtonModule = await getModule([ 'HomeButton' ]);
+    const getDefaultMethodByKeyword = (mdl, keyword) => {
+      const defaultMethod = mdl.__powercordOriginal_default ?? mdl.default;
+      return typeof defaultMethod === 'function' ? defaultMethod.toString().includes(keyword) : null;
+    };
 
-    inject('onlineFriendsCount-counter', HomeButtonModule, 'HomeButton', (_, res) => {
+    const DefaultHomeButton = await getModule(m => getDefaultMethodByKeyword(m, 'showDMsOnly'));
+    inject('onlineFriendsCount-counter', DefaultHomeButton, 'default', (_, res) => {
       if (!Array.isArray(res)) {
         res = [ res ];
       }
