@@ -1,28 +1,28 @@
 
-.onlineFriends-counter {
+.statistics-counter {
   font-size: 10px;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 13px;
   text-align: center;
   text-transform: uppercase;
   white-space: normal;
   width: 62px;
   word-wrap: normal;
-  color: var(--text-muted);
+  color: var(--channels-default);
 }
 
-.onlineFriends-counter.clickable {
+.statistics-counter.clickable {
   cursor: pointer;
 }
 
-.onlineFriends-counter.clickable:active {
+.statistics-counter.clickable:active {
   color: var(--interactive-active);
 }
 
-.onlineFriends-counter.clickable:hover {
+.statistics-counter.clickable:hover {
   color: var(--interactive-hover);
 }
 
-#onlineFriends-context-menu {
+#statistics-counter-context-menu {
   z-index: 0;
 }

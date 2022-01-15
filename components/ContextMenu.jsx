@@ -1,5 +1,7 @@
-const { React, Flux, getModule, contextMenu: { closeContextMenu } } = require('powercord/webpack');
+const { React, Flux, FluxDispatcher, getModule, contextMenu: { closeContextMenu } } = require('powercord/webpack');
 const { Menu } = require('powercord/components');
+
+const { FormattedCounterTypes } = require('../lib/Constants');
 
 class ContextMenu extends React.PureComponent {
   constructor (props) {
@@ -8,20 +10,19 @@ class ContextMenu extends React.PureComponent {
     this.handleRotationDelay = global._.debounce(this.handleRotationDelay.bind(this), 200);
     this.state = {
       autoRotation: props.getSetting('autoRotation', false),
-      extendedCounts: Object.assign({}, ...[ 'friends', 'pending', 'blocked', 'guilds' ]
-        .map(extendedCount => ({ [extendedCount]: props.getSetting(extendedCount, true) }))
-      )
+      counters: Object.assign({}, ...Object.values(FormattedCounterTypes).map(counter => ({
+        [counter.toLowerCase()]: props.getSetting(counter.toLowerCase(), true)
+      })))
     };
   }
 
   handleRotationDelay (delay) {
     this.props.updateSetting('autoRotationDelay', Math.round(delay));
-    this.props.main.forceUpdateHomeButton();
   }
 
   render () {
     return (
-      <Menu.Menu navId='onlineFriends-context-menu' onClose={closeContextMenu}>
+      <Menu.Menu navId='statistics-counter-context-menu' onClose={closeContextMenu}>
         {this.renderSettings()}
       </Menu.Menu>
     );
@@ -33,8 +34,8 @@ class ContextMenu extends React.PureComponent {
 
     return (
       <Menu.MenuGroup>
-        <Menu.MenuItem id='extended-counters' label='Extended Counters'>
-          {this._renderCounters()}
+        <Menu.MenuItem id='visibility' label='Visibility'>
+          {this.renderCounters()}
         </Menu.MenuItem>
 
         <Menu.MenuItem id='auto-rotation' label='Auto Rotation'>
@@ -46,11 +47,6 @@ class ContextMenu extends React.PureComponent {
               const newState = !this.state.autoRotation;
 
               updateSetting('autoRotation', newState);
-              this.props.main.forceUpdateHomeButton();
-
-              if (!newState) {
-                clearInterval(this.props.main.state.autoRotation);
-              }
 
               this.setState({ autoRotation: newState });
             }}
@@ -81,23 +77,37 @@ class ContextMenu extends React.PureComponent {
     );
   }
 
-  _renderCounters () {
-    return [ 'friends', 'pending', 'blocked', 'guilds' ].map(extendedCount => (
-      <Menu.MenuCheckboxItem
-        id={extendedCount}
-        label={`Show ${extendedCount.charAt(0).toUpperCase()}${extendedCount.slice(1)}`}
-        checked={this.state.extendedCounts[extendedCount]}
+  renderCounters () {
+    const { main: { constants, counterStore } } = this.props;
+
+    return Object.keys(FormattedCounterTypes).map(counter => {
+      const counterName = FormattedCounterTypes[counter];
+      const lowerCounterName = counterName.toLowerCase();
+
+      return <Menu.MenuCheckboxItem
+        id={`show-${counterName}`}
+        label={`Show ${counterName}`}
+        checked={this.state.counters[lowerCounterName]}
+        disabled={counterStore.getFilteredCounters().length === 1 && counterStore.getFilteredCounters().includes(counter)}
         action={() => {
-          const newState = !this.state.extendedCounts[extendedCount];
+          const newState = !this.state.counters[lowerCounterName];
 
-          this.props.updateSetting(extendedCount, newState);
-          this.props.main.forceUpdateHomeButton();
+          this.props.updateSetting(lowerCounterName, newState);
+          this.state.counters[lowerCounterName] = newState;
 
-          this.state.extendedCounts[extendedCount] = newState;
-          this.setState({ extendedCounts: this.state.extendedCounts });
+          if (newState === false) {
+            const { activeCounter, nextCounter } = counterStore.getState();
+
+            activeCounter === counter && FluxDispatcher.dirtyDispatch({
+              type: constants.ActionTypes.STATISTICS_COUNTER_SET_ACTIVE_COUNTER,
+              counter: nextCounter
+            });
+          }
+
+          this.setState({ counters: this.state.counters });
         }}
       />
-    ));
+    });
   }
 }
 
