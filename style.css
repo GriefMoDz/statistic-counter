@@ -11,18 +11,26 @@
   color: var(--channels-default);
 }
 
-.statistics-counter.clickable {
+.statistics-counter .clickable {
   cursor: pointer;
 }
 
-.statistics-counter.clickable:active {
+.statistics-counter .clickable:active {
   color: var(--interactive-active);
 }
 
-.statistics-counter.clickable:hover {
+.statistics-counter .clickable:hover {
   color: var(--interactive-hover);
 }
 
 #statistics-counter-context-menu {
   z-index: 0;
+}
+
+.statistics-counter-list-item {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+  position: relative;
+  width: 72px;
 }

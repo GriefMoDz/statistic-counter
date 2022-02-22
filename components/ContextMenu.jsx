@@ -1,117 +1,137 @@
-const { React, Flux, FluxDispatcher, getModule, contextMenu: { closeContextMenu } } = require('powercord/webpack');
+const { React, FluxDispatcher, getModule, contextMenu: { closeContextMenu } } = require('powercord/webpack');
 const { Menu } = require('powercord/components');
 
 const { FormattedCounterTypes } = require('../lib/Constants');
 
-class ContextMenu extends React.PureComponent {
-  constructor (props) {
-    super(props);
+const Slider = getModule(m => m.render?.toString().includes('sliderContainer'), false) || (() => null);
 
-    this.handleRotationDelay = global._.debounce(this.handleRotationDelay.bind(this), 200);
-    this.state = {
-      autoRotation: props.getSetting('autoRotation', false),
-      counters: Object.assign({}, ...Object.values(FormattedCounterTypes).map(counter => ({
-        [counter.toLowerCase()]: props.getSetting(counter.toLowerCase(), true)
-      })))
-    };
-  }
+function renderCounterItems (settings, main) {
+  const { constants: { ActionTypes }, counterStore } = main;
 
-  handleRotationDelay (delay) {
-    this.props.updateSetting('autoRotationDelay', Math.round(delay));
-  }
+  return Object.keys(FormattedCounterTypes).map(counter => {
+    const counterName = FormattedCounterTypes[counter];
+    const lowerCounterName = counterName.toLowerCase();
 
-  render () {
-    return (
-      <Menu.Menu navId='statistics-counter-context-menu' onClose={closeContextMenu}>
-        {this.renderSettings()}
-      </Menu.Menu>
-    );
-  }
-
-  renderSettings () {
-    const { getSetting, updateSetting } = this.props;
-    const Slider = getModule(m => m.render && m.render.toString().includes('sliderContainer'), false);
+    const currentState = settings.getSetting(lowerCounterName, true);
 
     return (
-      <Menu.MenuGroup>
-        <Menu.MenuItem id='visibility' label='Visibility'>
-          {this.renderCounters()}
-        </Menu.MenuItem>
-
-        <Menu.MenuItem id='auto-rotation' label='Auto Rotation'>
-          <Menu.MenuCheckboxItem
-            id='enabled'
-            label='Enabled'
-            checked={this.state.autoRotation}
-            action={() => {
-              const newState = !this.state.autoRotation;
-
-              updateSetting('autoRotation', newState);
-
-              this.setState({ autoRotation: newState });
-            }}
-          />
-          <Menu.MenuControlItem
-            id='rotate-interval'
-            label='Rotate Interval'
-            control={(props, ref) => (
-              <Slider
-                mini
-                ref={ref}
-                value={getSetting('autoRotationDelay', 3e4)}
-                initialValue={3e4}
-                minValue={5e3}
-                maxValue={36e5}
-                renderValue={(value) => {
-                  const seconds = (value / 1000);
-                  const minutes = ((value / 1000) / 60);
-                  return value < 6e4 ? `${seconds.toFixed(1)} secs` : `${minutes.toFixed(1)} mins`;
-                }}
-                onChange={this.handleRotationDelay.bind(this)}
-                {...props}
-              />
-            )}
-          />
-        </Menu.MenuItem>
-      </Menu.MenuGroup>
-    );
-  }
-
-  renderCounters () {
-    const { main: { constants, counterStore } } = this.props;
-
-    return Object.keys(FormattedCounterTypes).map(counter => {
-      const counterName = FormattedCounterTypes[counter];
-      const lowerCounterName = counterName.toLowerCase();
-
-      return <Menu.MenuCheckboxItem
+      <Menu.MenuCheckboxItem
         id={`show-${counterName}`}
         label={`Show ${counterName}`}
-        checked={this.state.counters[lowerCounterName]}
-        disabled={counterStore.getFilteredCounters().length === 1 && counterStore.getFilteredCounters().includes(counter)}
+        checked={currentState}
+        disabled={counterStore.filteredCounters.length === 1 && counterStore.filteredCounters.includes(counter)}
         action={() => {
-          const newState = !this.state.counters[lowerCounterName];
+          const newState = !currentState;
 
-          this.props.updateSetting(lowerCounterName, newState);
-          this.state.counters[lowerCounterName] = newState;
+          settings.updateSetting(lowerCounterName, newState);
 
           if (newState === false) {
-            const { activeCounter, nextCounter } = counterStore.getState();
+            const { activeCounter, nextCounter } = counterStore.state;
 
             activeCounter === counter && FluxDispatcher.dirtyDispatch({
-              type: constants.ActionTypes.STATISTICS_COUNTER_SET_ACTIVE_COUNTER,
+              type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
               counter: nextCounter
             });
           }
-
-          this.setState({ counters: this.state.counters });
         }}
       />
-    });
-  }
+    );
+  });
 }
 
-module.exports = Flux.connectStores(
-  [ powercord.api.settings.store ],
-  (props) => ({ ...powercord.api.settings._fluxProps(props.main.entityID) })
-)(ContextMenu);
+function renderAutoRotationItems ({ getSetting, updateSetting }) {
+  const autoRotation = getSetting('autoRotation', false);
+  const autoRotationDelay = getSetting('autoRotationDelay', 3e4);
+  const autoRotationHoverPause = getSetting('autoRotationHoverPause', true);
+
+  const handleRotationDelay = (delay) => global._.debounce(
+    updateSetting('autoRotationDelay', Math.round(delay)),
+    200
+  );
+
+  return (
+    <Menu.MenuItem id='auto-rotation' label='Auto Rotation'>
+      <Menu.MenuCheckboxItem
+        id='enabled'
+        label='Enabled'
+        checked={autoRotation}
+        action={() => updateSetting('autoRotation', !autoRotation)}
+      />
+      {autoRotation && <Menu.MenuGroup>
+        <Menu.MenuCheckboxItem
+          id='pause-on-hover'
+          label='Pause on Hover'
+          checked={autoRotationHoverPause}
+          action={() => updateSetting('autoRotationHoverPause', !autoRotationHoverPause)}
+        />
+        <Menu.MenuControlItem
+          id='rotate-interval'
+          label='Rotate Interval'
+          control={(props, ref) => (
+            <Slider
+              mini
+              ref={ref}
+              value={autoRotationDelay}
+              initialValue={3e4}
+              minValue={5e3}
+              maxValue={36e5}
+              renderValue={(value) => {
+                const seconds = (value / 1000);
+                const minutes = ((value / 1000) / 60);
+                return value < 6e4 ? `${seconds.toFixed(0)} secs` : `${minutes.toFixed(0)} mins`;
+              }}
+              onChange={handleRotationDelay}
+              {...props}
+            />
+          )}
+        />
+      </Menu.MenuGroup>}
+    </Menu.MenuItem>
+  );
+}
+
+function renderVisibilityItems (settings, main) {
+  const { counterStore: { state: counterState } } = main;
+
+  const preserveLastCounter = settings.getSetting('preserveLastCounter', false);
+
+  return (
+    <Menu.MenuItem id='visibility' label='Visibility'>
+      {renderCounterItems(settings, main)}
+      <Menu.MenuGroup>
+        <Menu.MenuCheckboxItem
+          id='preserve-last-counter'
+          label='Preserve Last Counter'
+          checked={preserveLastCounter}
+          action={() => {
+            const newState = !preserveLastCounter;
+
+            settings.updateSetting('lastCounter', newState ? counterState.activeCounter : void 0);
+            settings.updateSetting('preserveLastCounter', newState);
+          }}
+        />
+      </Menu.MenuGroup>
+    </Menu.MenuItem>
+  );
+}
+
+function renderSettingItems (...args) {
+  return (
+    <Menu.MenuGroup>
+      {renderVisibilityItems(...args)}
+      {renderAutoRotationItems(...args)}
+    </Menu.MenuGroup>
+  );
+}
+
+module.exports = React.memo(props => {
+  const { main } = props;
+
+  delete props.main;
+
+  return (
+    <Menu.Menu navId='statistics-counter-context-menu' onClose={closeContextMenu}>
+      {renderSettingItems(props, main)}
+    </Menu.Menu>
+  );
+});

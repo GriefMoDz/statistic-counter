@@ -8,26 +8,16 @@ const {
   constants: { RelationshipTypes }
 } = require('powercord/webpack');
 
-const { ActionTypes, CounterTranslationKeys } = require('../lib/Constants');
-
 const ContextMenu = require('./ContextMenu');
-
-const IntervalWrapper = getModuleByDisplayName('IntervalWrapper', false);
-const renderListItem = getModuleByDisplayName('renderListItem', false);
-
-const guildStore = getModule([ 'initialize', 'totalGuilds' ], false);
-const statusStore = getModule([ 'initialize', 'isMobileOnline' ], false);
-const relationshipStore = getModule([ 'initialize', 'getRelationships' ], false);
+const RelationshipStore = getModule([ 'initialize', 'getRelationships' ], false);
 
 function getRelationshipCounts () {
-  const relationshipTypes = Object.keys(RelationshipTypes).filter(key => isNaN(key));
+  const relationshipTypes = Object.keys(RelationshipTypes).filter(isNaN);
   const relationshipCounts = relationshipTypes.reduce((obj, type) => ({ ...obj, [type]: 0 }), {});
-  const relationships = relationshipStore?.getRelationships();
+  const relationships = RelationshipStore.getRelationships();
 
-  if (relationships) {
-    for (const type in relationships) {
-      relationshipCounts[relationshipTypes[relationships[type]]]++;
-    }
+  for (const type in relationships) {
+    relationshipCounts[relationshipTypes[relationships[type]]]++;
   }
 
   return relationshipCounts;
@@ -35,45 +25,54 @@ function getRelationshipCounts () {
 
 const Flux = getModule([ 'useStateFromStores' ], false);
 
+const IntervalWrapper = getModuleByDisplayName('IntervalWrapper', false);
+const renderListItem = getModuleByDisplayName('renderListItem', false);
+
+const StatusStore = getModule([ 'initialize', 'isMobileOnline' ], false);
+const GuildStore = getModule([ 'initialize', 'totalGuilds' ], false);
+
 module.exports = React.memo(props => {
-  const { getSetting, main: { counterStore } } = props;
+  const { getSetting, updateSetting, main: { counterStore: CounterStore, settings, constants: { ActionTypes, CounterTranslationKeys } } } = props;
 
-  const states = Flux.useStateFromStores([ counterStore, relationshipStore, statusStore, guildStore ], () => {
-    const { activeCounter, nextCounter } = counterStore.getState();
-
-    return ({
-      activeCounter,
-      nextCounter,
-      counters: {
-        ONLINE: relationshipStore?.getFriendIDs().filter(id => statusStore.getStatus(id) !== 'offline').length || 0,
-        GUILDS: guildStore?.totalGuilds || 0,
-        ...getRelationshipCounts()
-      }
-    })
-  });
+  const { activeCounter, nextCounter, counters } = Flux.useStateFromStores([ CounterStore, RelationshipStore, StatusStore, GuildStore ], () => ({
+    ...CounterStore.state,
+    counters: {
+      ONLINE: RelationshipStore?.getFriendIDs?.().filter(id => StatusStore.getStatus(id) !== 'offline').length || 0,
+      GUILDS: GuildStore?.totalGuilds || 0,
+      ...getRelationshipCounts()
+    }
+  }));
 
   const goToNextCounter = () => {
+    if (getSetting('preserveLastCounter', false)) {
+      updateSetting('lastCounter', CounterStore.nextCounter);
+    }
+
     FluxDispatcher.dirtyDispatch({
-      type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE_COUNTER,
-      counter: counterStore.getNextCounter()
+      type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
+      counter: CounterStore.nextCounter
     });
-  }
+  };
 
   const handleOnClick = goToNextCounter;
   const handleOnInterval = goToNextCounter;
-  const handleOnContextMenu = (e) => contextMenu.openContextMenu(e, () => <ContextMenu main={props.main} />);
+  const handleOnContextMenu = (e) => contextMenu.openContextMenu(e, () => {
+    const ConnectedContextMenu = settings.connectStore(ContextMenu);
+
+    return <ConnectedContextMenu main={props.main} />;
+  });
 
   return (
     renderListItem(
       <IntervalWrapper
-        className={[ 'statistics-counter', states.activeCounter !== states.nextCounter && 'clickable' ].filter(Boolean).join(' ')}
+        className='statistics-counter'
         onInterval={handleOnInterval}
         interval={getSetting('autoRotationDelay', 3e4)}
-        disable={getSetting('autoRotation', false) === false}
-        pauseOnHover={true}
+        disable={activeCounter === nextCounter || getSetting('autoRotation', false) === false}
+        pauseOnHover={getSetting('autoRotationHoverPause', true) === true}
       >
-        <span onContextMenu={handleOnContextMenu} onClick={handleOnClick}>
-          {Messages[CounterTranslationKeys[states.activeCounter]]} — {states.counters[states.activeCounter]}
+        <span className={activeCounter !== nextCounter && 'clickable'} onContextMenu={handleOnContextMenu} onClick={handleOnClick}>
+          {Messages[CounterTranslationKeys[activeCounter]]} — {counters[activeCounter]}
         </span>
       </IntervalWrapper>
     )
