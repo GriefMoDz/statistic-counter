@@ -1,13 +1,12 @@
 const { React, FluxDispatcher, getModule, contextMenu: { closeContextMenu } } = require('powercord/webpack');
 const { Menu } = require('powercord/components');
 
-const { FormattedCounterTypes } = require('../lib/Constants');
+const { ActionTypes, FormattedCounterTypes } = require('../lib/Constants');
 
+const CounterStore = require('../lib/Store');
 const Slider = getModule(m => m.render?.toString().includes('sliderContainer'), false) || (() => null);
 
-function renderCounterItems (settings, main) {
-  const { constants: { ActionTypes }, counterStore } = main;
-
+function renderCounterItems (settings) {
   return Object.keys(FormattedCounterTypes).map(counter => {
     const counterName = FormattedCounterTypes[counter];
     const lowerCounterName = counterName.toLowerCase();
@@ -19,14 +18,14 @@ function renderCounterItems (settings, main) {
         id={`show-${counterName}`}
         label={`Show ${counterName}`}
         checked={currentState}
-        disabled={counterStore.filteredCounters.length === 1 && counterStore.filteredCounters.includes(counter)}
+        disabled={CounterStore.filteredCounters.length === 1 && CounterStore.filteredCounters.includes(counter)}
         action={() => {
           const newState = !currentState;
 
           settings.updateSetting(lowerCounterName, newState);
 
           if (newState === false) {
-            const { activeCounter, nextCounter } = counterStore.state;
+            const { activeCounter, nextCounter } = CounterStore.state;
 
             activeCounter === counter && FluxDispatcher.dirtyDispatch({
               type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
@@ -90,14 +89,13 @@ function renderAutoRotationItems ({ getSetting, updateSetting }) {
   );
 }
 
-function renderVisibilityItems (settings, main) {
-  const { counterStore: { state: counterState } } = main;
-
+function renderVisibilityItems (settings) {
+  const counterState = CounterStore.state;
   const preserveLastCounter = settings.getSetting('preserveLastCounter', false);
 
   return (
     <Menu.MenuItem id='visibility' label='Visibility'>
-      {renderCounterItems(settings, main)}
+      {renderCounterItems(settings)}
       <Menu.MenuGroup>
         <Menu.MenuCheckboxItem
           id='preserve-last-counter'
@@ -115,23 +113,17 @@ function renderVisibilityItems (settings, main) {
   );
 }
 
-function renderSettingItems (...args) {
+function renderSettingItems (props) {
   return (
     <Menu.MenuGroup>
-      {renderVisibilityItems(...args)}
-      {renderAutoRotationItems(...args)}
+      {renderVisibilityItems(props)}
+      {renderAutoRotationItems(props)}
     </Menu.MenuGroup>
   );
 }
 
-module.exports = React.memo(props => {
-  const { main } = props;
-
-  delete props.main;
-
-  return (
-    <Menu.Menu navId='statistics-counter-context-menu' onClose={closeContextMenu}>
-      {renderSettingItems(props, main)}
-    </Menu.Menu>
-  );
-});
+module.exports = React.memo(props =>
+  <Menu.Menu navId='statistics-counter-context-menu' onClose={closeContextMenu}>
+    {renderSettingItems(props)}
+  </Menu.Menu>
+);

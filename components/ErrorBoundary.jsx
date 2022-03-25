@@ -27,7 +27,7 @@ module.exports = class ErrorBoundary extends React.PureComponent {
     if (hasError) {
       if (!encounteredErrors.includes(error)) {
         console.log(
-          '%c[ErrorBoundary:StatisticsCounter]', 'color: #f04747',
+          '%c[ErrorBoundary:StatisticsCounter]', 'color: #f04747;',
           'An error has occurred while rendering the statistics counter. Please contact Harley (350227339784880130), or open an issue on the GitHub repository.\n',
           { error, info }
         );

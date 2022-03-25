@@ -8,7 +8,10 @@ const {
   constants: { RelationshipTypes }
 } = require('powercord/webpack');
 
+const { ActionTypes, CounterTranslationKeys } = require('../lib/Constants');
+
 const ContextMenu = require('./ContextMenu');
+const CounterStore = require('../lib/Store');
 const RelationshipStore = getModule([ 'initialize', 'getRelationships' ], false);
 
 function getRelationshipCounts () {
@@ -31,9 +34,8 @@ const renderListItem = getModuleByDisplayName('renderListItem', false);
 const StatusStore = getModule([ 'initialize', 'isMobileOnline' ], false);
 const GuildStore = getModule([ 'initialize', 'totalGuilds' ], false);
 
-module.exports = React.memo(props => {
-  const { getSetting, updateSetting, main: { counterStore: CounterStore, settings, constants: { ActionTypes, CounterTranslationKeys } } } = props;
-
+module.exports = () => {
+  const { getSetting, updateSetting } = powercord.api.settings._fluxProps('statistics-counter');
   const { activeCounter, nextCounter, counters } = Flux.useStateFromStores([ CounterStore, RelationshipStore, StatusStore, GuildStore ], () => ({
     ...CounterStore.state,
     counters: {
@@ -57,9 +59,11 @@ module.exports = React.memo(props => {
   const handleOnClick = goToNextCounter;
   const handleOnInterval = goToNextCounter;
   const handleOnContextMenu = (e) => contextMenu.openContextMenu(e, () => {
-    const ConnectedContextMenu = settings.connectStore(ContextMenu);
+    const ConnectedContextMenu = Flux.default.connectStores([ powercord.api.settings.store ], () => ({
+      ...powercord.api.settings._fluxProps('statistics-counter')
+    }))(ContextMenu);
 
-    return <ConnectedContextMenu main={props.main} />;
+    return <ConnectedContextMenu/>;
   });
 
   return (
@@ -77,4 +81,4 @@ module.exports = React.memo(props => {
       </IntervalWrapper>
     )
   );
-});
+};
