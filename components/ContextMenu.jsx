@@ -27,7 +27,7 @@ function renderCounterItems (settings) {
           if (newState === false) {
             const { activeCounter, nextCounter } = CounterStore.state;
 
-            activeCounter === counter && FluxDispatcher.dirtyDispatch({
+            activeCounter === counter && FluxDispatcher.dispatch({
               type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
               counter: nextCounter
             });
