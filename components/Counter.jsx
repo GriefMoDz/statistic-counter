@@ -50,7 +50,7 @@ module.exports = () => {
       updateSetting('lastCounter', CounterStore.nextCounter);
     }
 
-    FluxDispatcher.dirtyDispatch({
+    FluxDispatcher.dispatch({
       type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
       counter: CounterStore.nextCounter
     });
