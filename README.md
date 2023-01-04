@@ -7,8 +7,8 @@ Formally known as "Online Friends Count", this is a Replugged plug-in that has b
 - Auto rotation with a customizable interval - useful for switching between counters without the need of clicking.
 
 ## Planned Features
-[] Add a settings page
-[] Implement a context menu to quickly change settings
+- [ ] Add a settings page
+- [ ] Implement a context menu to quickly change settings
 
 ## Previews
 
