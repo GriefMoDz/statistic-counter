@@ -1,6 +1,10 @@
+import { Injector, util } from "replugged";
+
+const inject = new Injector();
+
 export type Predicate<Arg> = (arg: Arg) => boolean;
 
-export const findInReactTree = (node: JSX.Element | JSX.Element[], predicate: Predicate<JSX.Element>): JSX.Element | null => {
+export function findInReactTree(node: JSX.Element | JSX.Element[], predicate: Predicate<JSX.Element>): JSX.Element | null {
   const stack = [node].flat();
 
   while (stack.length !== 0) {
@@ -17,3 +21,18 @@ export const findInReactTree = (node: JSX.Element | JSX.Element[], predicate: Pr
 
   return null;
 };
+
+export function forceUpdate(element: Element | null): void {
+  if (!element) return;
+
+  const instance = util.getOwnerInstance<any>(element);
+  if (instance) {
+    const forceRerender = inject.instead(instance, 'render', () => {
+      forceRerender();
+
+      return null;
+    });
+
+    instance.forceUpdate(() => instance.forceUpdate(() => {}));
+  }
+}
