@@ -1,6 +1,6 @@
 {
   "name": "statistic-counter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Replugged plug-in that has been ported from Powercord which introduces an interchangeable statistic counter in-between the home button and servers list.",
   "engines": {
     "node": ">=14.0.0"
@@ -11,10 +11,10 @@
     "bundle": "tsx scripts/bundle.ts",
     "build-and-bundle": "pnpm run build --no-install && pnpm run bundle",
     "check": "tsc --noEmit",
-    "prettier:check": "prettier ./src ./scripts --check",
-    "eslint:check": "eslint ./src ./scripts",
-    "prettier:fix": "prettier ./src ./scripts --write",
-    "eslint:fix": "eslint ./src ./scripts --fix",
+    "prettier:check": "prettier ./src --check",
+    "eslint:check": "eslint ./src",
+    "prettier:fix": "prettier ./src --write",
+    "eslint:fix": "eslint ./src --fix",
     "lint": "pnpm run prettier:check && pnpm run eslint:check && pnpm run check",
     "lint:fix": "pnpm run prettier:fix && pnpm run eslint:fix"
   },

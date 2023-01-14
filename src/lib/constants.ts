@@ -1,4 +1,4 @@
-import type { CounterProps, CounterType } from '../types';
+import type { CounterProps, CounterType } from '@types';
 
 export const PLUGIN_ID = 'Statistic-Counter';
 

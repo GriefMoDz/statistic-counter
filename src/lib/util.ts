@@ -1,4 +1,4 @@
-import { Injector, util } from "replugged";
+import { Injector, util } from 'replugged';
 
 const inject = new Injector();
 
@@ -20,12 +20,12 @@ export function findInReactTree(node: JSX.Element | JSX.Element[], predicate: Pr
   }
 
   return null;
-};
+}
 
 export function forceUpdate(element: Element | null): void {
   if (!element) return;
 
-  const instance = util.getOwnerInstance<any>(element);
+  const instance = util.getOwnerInstance<React.Component & Record<string, unknown>>(element);
   if (instance) {
     const forceRerender = inject.instead(instance, 'render', () => {
       forceRerender();

@@ -1,9 +1,9 @@
 import { common, settings } from 'replugged';
 import { SettingsManager } from 'replugged/dist/renderer/apis/settings';
-import type { CounterSettings, CounterType, Dispatcher, Flux, Store } from '../types';
+import type { CounterSettings, CounterStore as CounterStoreType, CounterType, Flux, Store } from '@types';
 
 const Flux = common.flux as unknown as Flux;
-const FluxDispatcher = common.fluxDispatcher as unknown as Dispatcher;
+const FluxDispatcher = common.fluxDispatcher;
 
 import { ActionTypes, Counters } from './constants';
 
@@ -16,24 +16,24 @@ interface CounterStoreState {
 }
 
 class CounterStore extends Flux.Store {
-  static displayName = 'StatisticCounterStore';
+  public static displayName = 'StatisticCounterStore';
 
-  get state(): CounterStoreState {
+  public get state(): CounterStoreState {
     return {
       activeCounter: activeCounter || this.filteredCounters[0],
       nextCounter: this.nextCounter
     };
   }
 
-  get settings(): SettingsManager<CounterSettings> {
+  public get settings(): SettingsManager<CounterSettings> {
     return prefs;
   }
 
-  get filteredCounters(): Array<CounterType | string> {
+  public get filteredCounters(): Array<CounterType | string> {
     return Object.keys(Counters).filter((counter) => prefs.get(counter, true));
   }
 
-  get nextCounter(): CounterType | string {
+  public get nextCounter(): CounterType | string {
     const counters = this.filteredCounters;
     const currentIndex = counters.indexOf(activeCounter || counters[0]);
 
@@ -41,7 +41,7 @@ class CounterStore extends Flux.Store {
   }
 }
 
-export default Flux.Store?.getAll?.().find((store: Store) => store.getName() === CounterStore.displayName) ||
+export default (Flux.Store?.getAll?.().find((store: Store) => store.getName() === CounterStore.displayName) ||
   new CounterStore(FluxDispatcher, {
     [ActionTypes.STATISTICS_COUNTER_SET_ACTIVE]: ({ counter }) => (activeCounter = counter)
-  });
+  })) as CounterStoreType;

@@ -1,17 +1,17 @@
 import { Injector, Logger, util, webpack } from 'replugged';
-import { findInReactTree, forceUpdate } from './lib/util';
-import { PLUGIN_ID } from './lib/constants';
-import { Counter } from './components';
+import { findInReactTree, forceUpdate } from '@lib/util';
+import { PLUGIN_ID } from '@lib/constants';
+import { Counter } from '@components';
 
-import type { GuildsNavComponent } from './types';
+import type { GuildClasses, GuildsNavComponent } from '@types';
 
 const inject = new Injector();
 const logger = Logger.plugin(PLUGIN_ID.replace(/-/g, ' '), '#3ba55c');
 
-let GuildClasses: { guilds: string; };
+let GuildClasses: GuildClasses;
 
 export async function start(): Promise<void> {
-  GuildClasses = await webpack.waitForModule<any>(webpack.filters.byProps('guilds', 'sidebar'));
+  GuildClasses = await webpack.waitForModule<GuildClasses>(webpack.filters.byProps('guilds', 'sidebar'));
 
   patchGuildsNav();
 }
@@ -25,7 +25,7 @@ export function stop(): void {
 export async function patchGuildsNav(): Promise<void> {
   const start = performance.now();
 
-  const GuildsNav: GuildsNavComponent = await webpack.waitForModule<any>(webpack.filters.bySource('guildsnav'));
+  const GuildsNav = await webpack.waitForModule<GuildsNavComponent>(webpack.filters.bySource('guildsnav'));
 
   inject.after(GuildsNav, 'type', ([props], res) => {
     const GuildsNavBar = findInReactTree(res, (node) => node?.props?.className?.includes(props.className));
@@ -45,7 +45,7 @@ export async function patchGuildsNav(): Promise<void> {
         HomeButtonIndex && (StatisticCounterIndex = HomeButtonIndex + 1);
       }
 
-      NavScroll.props.children.splice(StatisticCounterIndex, 0, <Counter/>);
+      NavScroll.props.children.splice(StatisticCounterIndex, 0, <Counter />);
 
       return res;
     });

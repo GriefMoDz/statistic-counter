@@ -1,13 +1,14 @@
-import CounterStore from '../lib/store';
+import CounterStore from '@lib/store';
 import ErrorBoundary from './ErrorBoundary';
 import '../main.css';
 
 import { common, webpack } from 'replugged';
-import { ActionTypes, Counters } from '../lib/constants';
-import type { CounterState, Dispatcher, Flux, GuildAvailabilityStore, RelationshipStore, PresenceStore } from '../types';
+import { ActionTypes, Counters } from '@lib/constants';
+import type { CounterState, Flux, GuildAvailabilityStore, RelationshipStore, PresenceStore } from '@types';
+import type { FluxDispatcher } from 'replugged/dist/renderer/modules/webpack/common';
 
 const Flux = common.flux as unknown as Flux;
-const FluxDispatcher = common.fluxDispatcher as unknown as Dispatcher;
+const FluxDispatcher = common.fluxDispatcher as unknown as FluxDispatcher;
 
 const { getExportsForProps } = webpack;
 
@@ -76,7 +77,7 @@ function Counter(): JSX.Element {
           className='statistic-counter'
           onInterval={handleOnInterval}
           interval={settings.get('autoRotationDelay', 3e4)}
-          disable={activeCounter === nextCounter ?? !settings.get('autoRotation', false)}
+          disable={activeCounter === nextCounter || !settings.get('autoRotation', false)}
           pauseOnHover={!!settings.get('autoRotationHoverPause', true)}>
           <span className={activeCounter !== nextCounter ? 'clickable' : ''} onClick={handleOnClick}>
             {Messages[Counters[activeCounter].translationKey]} — {counters[Counters[activeCounter].storeKey]}

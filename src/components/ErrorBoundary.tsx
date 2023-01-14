@@ -1,5 +1,5 @@
 import { common } from 'replugged';
-import type { ErrorBoundaryState } from '../types';
+import type { ErrorBoundaryState } from '@types';
 
 const { React } = common;
 

@@ -1,103 +1,45 @@
-/**
- * Credits to @Zerthox for this type file
- * https://github.com/Zerthox/BetterDiscord-Plugins/blob/master/dium/src/modules/flux.ts
- *
- * License: MIT (https://github.com/Zerthox/BetterDiscord-Plugins/blob/master/LICENSE)
- */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ReactComponent } from 'replugged/dist/types';
+import type { FluxDispatcher as Dispatcher } from 'replugged/dist/renderer/modules/webpack/common';
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-export type ActionType = string;
+type DispatchToken = string;
+type ActionType = string;
 
-export interface Action {
+interface Action {
   type: ActionType;
 }
 
-export type ActionHandler<A extends Action = any> = (action: A) => void;
+type ActionHandler<A extends Action = any> = (action: A) => void;
 
 type ActionHandlerRecord = {
-  [A in ActionType]: ActionHandler<{ type: A; [key: string] }>;
+  [A in ActionType]: ActionHandler<{ type: A; [key: string]: any }>;
 };
 
-export type DispatchToken = string;
+export declare class Emitter {
+  public static changeSentinel: number;
+  public static changedStores: Set<Store>;
+  public static isBatchEmitting: boolean;
+  public static isDispatching: boolean;
+  public static isPaused: boolean;
+  public static pauseTimer: ReturnType<typeof setTimeout> | undefined;
+  public static reactChangedStores: Set<Store>;
 
-type StoreDidChange = (arg: any) => boolean;
+  public batched(): void;
+  public destroy(): void;
 
-interface DepGraph {
-  nodes: Record<DispatchToken, DepGraphNode>;
-  incomingEdges: Record<DispatchToken, DispatchToken[]>;
-  outgoingEdges: Record<DispatchToken, DispatchToken[]>;
-  circular: any;
+  public emit(): void;
+  public emitReactOnce(): void;
+  public emitNonReactOnce(): void;
 
-  size(): number;
-  clone(): DepGraph;
-  overallOrder(e: any): any;
+  public getChangeSentinel(): number;
+  public getIsPaused(): boolean;
 
-  getNodeData(e: any): any;
-  setNodeData(e: any, t: any): any;
-  hasNode(e: any): boolean;
-  addNode(e: any, t: any): any;
-  removeNode(e: any): any;
+  public injectBatchEmitChanges(): void;
+  public markChanged(): void;
 
-  addDependency(e: any, t: any): any;
-  dependantsOf(e: any, t: any): any;
-  dependenciesOf(e: any, t: any): any;
-  removeDependency(e: any, t: any): any;
+  public pause(callback?: () => void): void;
+  public resume(callback?: () => void): void;
 }
-
-interface DepGraphNode {
-  name: string;
-  actionHandler: ActionHandlerRecord;
-  storeDidChange: StoreDidChange;
-}
-
-interface HandlerEntry {
-  name: string;
-  actionHandler: ActionHandler;
-  storeDidChange: StoreDidChange;
-}
-
-interface ActionHandlers {
-  _dependencyGraph: DepGraph;
-  _lastID: number;
-  _orderedActionHandlers: Record<string, HandlerEntry[]>;
-  _orderedCallbackTokens: DispatchToken[];
-
-  _computeOrderedActionHandlers(actionType: ActionType): HandlerEntry[];
-  _computeOrderedCallbackTokens(): DispatchToken[];
-  _invalidateCaches(): void;
-
-  register: Dispatcher['register'];
-  addDependencies(arg1: any, arg2: any): void;
-  getOrderedActionHandlers(actionType: ActionType): HandlerEntry[];
-}
-
-export interface Dispatcher {
-  _currentDispatchActionType: any;
-  _actionHandlers: ActionHandlers;
-  _subscriptions: Record<string, any>;
-  _processingWaitQueue: boolean;
-  _waitQueue: any[];
-  _interceptor: (arg: any) => any;
-
-  _dispatch<A extends Action>(action: A): void;
-  _dispatchWithDevtools<A extends Action>(action: A): void;
-  _dispatchWithLogging<A extends Action>(action: A): void;
-
-  dispatch<A extends Action>(action: A): void;
-  isDispatching(): boolean;
-  flushWaitQueue(): void;
-
-  register(name: string, actionHandler: ActionHandlerRecord, storeDidChange: StoreDidChange): DispatchToken;
-  addDependencies(arg1: any, arg2: any): void;
-  setInterceptor(interceptor: any): void;
-
-  subscribe<A extends Action>(action: A['type'], handler: ActionHandler<A>): void;
-  unsubscribe<A extends Action>(action: A['type'], handler: ActionHandler<A>): void;
-
-  wait<T>(callback: () => T): T | void;
-}
-
-export type DispatcherConstructor = new () => Dispatcher;
 
 type Callback = () => void;
 
@@ -105,83 +47,109 @@ interface Callbacks {
   listeners: Set<Callback>;
   add(callback: Callback): void;
   addConditional(callback: Callback, condition: boolean): void;
-  remove(callback: Callback);
+  remove(callback: Callback): void;
   has(callback: Callback): boolean;
   hasAny(): boolean;
   invokeAll(): void;
 }
 
-declare class Store {
-  constructor(dispatcher: Dispatcher, actions: ActionHandlerRecord);
+export declare class Store {
+  public constructor(dispatcher: Dispatcher, actions: ActionHandlerRecord);
 
-  static destroy(): any;
-  static getAll(): any;
-  static initialize(): any;
-  static initialized: Promise<any>;
+  public static destroy(): void;
+  public static getAll(): Store[];
+  public static initialize(): void;
+  public static initialized: Promise<boolean | undefined>;
 
-  // private
-  _isInitialized: boolean;
-  _dispatchToken: DispatchToken;
-  _dispatcher: Dispatcher;
-  _changeCallbacks: Callbacks;
+  public _isInitialized: boolean;
+  public _dispatchToken: DispatchToken;
+  public _dispatcher: Dispatcher;
+  public _changeCallbacks: Callbacks;
+  public _reactChangeCallbacks: Callbacks;
 
-  initialize(): void;
-  initializeIfNeeded(): void;
-  getDispatchToken(): DispatchToken;
-  getName(): string;
+  public initialize(): void;
+  public initializeIfNeeded(): void;
+  public getDispatchToken(): DispatchToken;
+  public getName(): string;
 
-  emitChange(): void;
-  mustEmitChanges(func?: () => boolean): void;
-  syncWith(stores: Store[], func: () => boolean, timeout?: number): any;
-  waitFor(...stores: Store[]): void;
+  public emitChange(): void;
+  public mustEmitChanges(func?: () => boolean): void;
+  public syncWith(stores: Store[], func: () => boolean, timeout?: number): void;
+  public waitFor(...stores: Store[]): void;
 
-  addChangeListener(listener: Callback): void;
-  addConditionalChangeListener(listener: Callback, condition: boolean): void;
-  addReactChangeListener(listener: Callback): void;
-  removeChangeListener(listener: Callback): void;
-  removeReactChangeListener(listener: Callback): void;
+  public addChangeListener(listener: Callback): void;
+  public addConditionalChangeListener(listener: Callback, condition: boolean): void;
+  public addReactChangeListener(listener: Callback): void;
+  public removeChangeListener(listener: Callback): void;
+  public removeReactChangeListener(listener: Callback): void;
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  public __getLocalVars(): Record<string, unknown>;
 }
 
-declare class BatchedStoreListener {
-  constructor(stores: Store[], changeCallback: Callback);
-
-  attach(name: string): void;
-  detach(): void;
+interface ClearOptions {
+  omit?: string[];
+  type: 'all' | 'user-data-only';
 }
 
-export type { Store, BatchedStoreListener };
+interface State {
+  [key: string]: any;
+}
 
-export interface OldFlux {
+type States = Record<string, State>;
+type Migration = () => void;
+
+export declare class PersistedStore extends Store {
+  public static allPersistKeys: Set<string>;
+
+  public static clearAll(options: ClearOptions): Promise<void>;
+  public static clearPersistQueue(options: ClearOptions): void;
+  public static destroy(): void;
+
+  public static disableWrite: boolean;
+  public static disableWrites: boolean;
+
+  public static getAllStates(): States;
+  public static initializeAll(states: States): void;
+  public static migrateAndReadStoreState(
+    persistKey: string,
+    migrations: Migration[] | undefined
+  ): {
+    state: State;
+    requiresPersist: boolean;
+  };
+  public static shouldClear(options: ClearOptions, persistKey: string): boolean;
+
+  public static throttleDelay: number;
+  public static userAgnosticPersistKeys: Set<string>;
+
+  public static _writePromises: Map<string, any>;
+  public static _writeResolvers: Map<string, any>;
+
+  public asyncPersist(): Promise<void>;
+  public clear(): void;
+  public getClass(): any;
+  public initializeFromState(state: any): void;
+  public initializeIfNeeded(): void;
+  public persist(): void;
+}
+
+export type DeviceSettingsStore = typeof PersistedStore;
+export type OfflineCacheStore = typeof PersistedStore;
+
+export interface Flux {
+  DeviceSettingsStore: DeviceSettingsStore;
+  Emitter: Emitter;
+  OfflineCacheStore: OfflineCacheStore;
+  PersistedStore: typeof PersistedStore;
   Store: typeof Store;
-  CachedStore: any;
-  PersistedStore: any;
-  StoreListenerMixin: any;
-  LazyStoreListenerMixin: any;
-
-  destroy(): void;
-  initialize(): void;
-  initialized: boolean;
-
   connectStores<OuterProps, InnerProps>(
     stores: Store[],
     callback: (props: OuterProps) => InnerProps,
     options?: { forwardRef: boolean }
-  ): (component: React.ComponentType<InnerProps & OuterProps>) => React.ComponentClass<OuterProps>;
+  ): (component: ReactComponent<InnerProps & OuterProps>) => React.ReactElement<OuterProps>;
+
+  destroy(): void;
+  initialize(): void;
+  get initialized(): Promise<boolean | undefined>;
 }
-
-export type Comparator<T> = (a: T, b: T) => boolean;
-
-export interface FluxHooks {
-  default: OldFlux;
-
-  Store: typeof Store;
-  Dispatcher: DispatcherConstructor;
-  BatchedStoreListener: typeof BatchedStoreListener;
-
-  useStateFromStores<T>(stores: Store[], callback: () => T, deps?: React.DependencyList, compare?: Comparator<T>): T;
-  useStateFromStoresArray<T>(stores: Store[], callback: () => T, deps?: React.DependencyList): T;
-  useStateFromStoresObject<T>(stores: Store[], callback: () => T, deps?: React.DependencyList): T;
-  statesWillNeverBeEqual: Comparator<unknown>;
-}
-
-export type Flux = Pick<FluxHooks, 'default' | 'Store' | 'Dispatcher' | 'BatchedStoreListener' | 'useStateFromStores'>;

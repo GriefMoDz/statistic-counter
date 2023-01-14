@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 export * from './flux';
 
 import type { Store } from './flux';
-import type { Counters } from '../lib/constants';
+import type { Counters } from '@lib/constants';
 import type { SettingsManager } from 'replugged/dist/renderer/apis/settings';
+import type { RawModule } from 'replugged/dist/types';
 
 export type Comparator<T> = (a: T, b: T) => boolean;
 
@@ -13,6 +15,20 @@ export interface ErrorBoundaryState {
 export interface GuildsNavProps {
   className: string;
   themeOverride: string;
+}
+
+export interface GuildClasses extends RawModule {
+  activityPanel: string;
+  base: string;
+  container: string;
+  content: string;
+  downloadProgressCircle: string;
+  fullWidth: string;
+  guilds: string;
+  hasNotice: string;
+  hidden: string;
+  panels: string;
+  sidebar: string;
 }
 
 export interface GuildsNavClasses {
@@ -27,7 +43,7 @@ export interface GuildsNavClasses {
   wrapper: string;
 }
 
-export interface GuildsNavComponent {
+export interface GuildsNavComponent extends RawModule {
   $$typeof: symbol;
   compare: Comparator<unknown>;
   type: (props: GuildsNavProps) => React.ReactElement;
@@ -37,6 +53,13 @@ export type CounterType = 'online' | 'friends' | 'pending' | 'blocked' | 'guilds
 export interface CounterProps {
   storeKey: string;
   translationKey: string;
+}
+
+export interface CounterStore extends Store {
+  state: CounterState;
+  settings: SettingsManager<CounterSettings>;
+  nextCounter: CounterType;
+  filteredCounters: CounterType[];
 }
 
 export interface CounterSettings {
