@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-export * from './flux';
-
-import type { Store } from './flux';
-import type { Counters } from '@lib/constants';
+import type { Store } from 'replugged/dist/renderer/modules/webpack/common/flux';
 import type { SettingsManager } from 'replugged/dist/renderer/apis/settings';
 import type { RawModule } from 'replugged/dist/types';
+import type { Counters } from '@lib/constants';
 
 export type Comparator<T> = (a: T, b: T) => boolean;
 
@@ -63,12 +61,16 @@ export interface CounterStore extends Store {
 }
 
 export interface CounterSettings {
-  autoRotation: boolean;
-  autoRotationDelay: number;
-  autoRotationHoverPause: boolean;
-  preserveLastCounter: boolean;
-  lastCounter: CounterType;
-  [key: string]: boolean;
+  autoRotation?: boolean;
+  autoRotationDelay?: number;
+  autoRotationHoverPause?: boolean;
+  preserveLastCounter?: boolean;
+  lastCounter?: CounterType;
+  online?: boolean;
+  friends?: boolean;
+  pending?: boolean;
+  blocked?: boolean;
+  guilds?: boolean;
 }
 
 export interface CounterState {
@@ -89,7 +91,7 @@ export const enum RelationshipTypes {
   SUGGESTION
 }
 
-export interface RelationshipStore extends Store {
+export interface RelationshipStore extends RawModule, Store {
   getFriendIDs(): Snowflake[];
   getNickname(userId: string): string;
   getPendingCount(): number;
@@ -165,7 +167,7 @@ export interface PresenceStoreState {
   presencesForGuilds: Record<Snowflake, Record<Snowflake, UserPresence>>;
 }
 
-export interface PresenceStore extends Store {
+export interface PresenceStore extends RawModule, Store {
   findActivity(userId: Snowflake, predicate: (arg: unknown) => boolean): Activity;
   getActivities(userId: Snowflake): Activity[];
   getActivityMetadata(userId: Snowflake): unknown;
@@ -177,10 +179,9 @@ export interface PresenceStore extends Store {
   getUserIds(): Snowflake[];
   isMobileOnline(userId: Snowflake): boolean;
   setCurrentUserOnConnectionOpen(status: StatusTypes, activities: Record<Snowflake, Activity[]>): void;
-  __getLocalVars(): unknown;
 }
 
-export interface GuildAvailabilityStore extends Store {
+export interface GuildAvailabilityStore extends RawModule, Store {
   isUnavailable(guildId: Snowflake): boolean;
   get totalGuilds(): number;
   get totalUnavailableGuilds(): number;

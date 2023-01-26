@@ -1,10 +1,22 @@
-import type { CounterProps, CounterType } from '@types';
+import type { CounterProps, CounterSettings, CounterType } from '@types';
 
 export const PLUGIN_ID = 'Statistic-Counter';
 
 export const ActionTypes = {
   STATISTICS_COUNTER_SET_ACTIVE: 'STATISTICS_COUNTER_SET_ACTIVE'
 };
+
+export const DefaultSettings: Partial<CounterSettings> = {
+  autoRotation: false,
+  autoRotationDelay: 3e4,
+  autoRotationHoverPause: true,
+  preserveLastCounter: false,
+  online: true,
+  friends: true,
+  pending: true,
+  blocked: true,
+  guilds: true
+}
 
 export const Counters: Record<CounterType, CounterProps> = {
   online: {

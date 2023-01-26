@@ -1,13 +1,15 @@
 import { common, settings } from 'replugged';
 import { SettingsManager } from 'replugged/dist/renderer/apis/settings';
-import type { CounterSettings, CounterStore as CounterStoreType, CounterType, Flux, Store } from '@types';
 
-const Flux = common.flux as unknown as Flux;
+import type { Store } from 'replugged/dist/renderer/modules/webpack/common/flux';
+import type { CounterSettings, CounterStore as CounterStoreType, CounterType } from '@types';
+
+const Flux = common.flux;
 const FluxDispatcher = common.fluxDispatcher;
 
-import { ActionTypes, Counters } from './constants';
+import { ActionTypes, Counters, DefaultSettings } from '@lib/constants';
 
-const prefs = await settings.init<CounterSettings>('xyz.griefmodz.StatisticCounter');
+const prefs = await settings.init<CounterSettings, keyof typeof DefaultSettings>('xyz.griefmodz.StatisticCounter', DefaultSettings);
 let activeCounter = prefs.get('lastCounter');
 
 interface CounterStoreState {
@@ -25,12 +27,13 @@ class CounterStore extends Flux.Store {
     };
   }
 
-  public get settings(): SettingsManager<CounterSettings> {
+  public get settings(): SettingsManager<CounterSettings, keyof typeof DefaultSettings> {
     return prefs;
   }
 
   public get filteredCounters(): Array<CounterType | string> {
-    return Object.keys(Counters).filter((counter) => prefs.get(counter, true));
+    // @ts-expect-error Yeah... whatever.
+    return Object.keys(Counters).filter((counter: CounterType) => prefs.get(counter, true));
   }
 
   public get nextCounter(): CounterType | string {

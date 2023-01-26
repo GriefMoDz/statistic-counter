@@ -7,7 +7,8 @@ Formally known as "Online Friends Count", this is a Replugged plug-in that has b
 - Auto rotation with a customizable interval - useful for switching between counters without the need of clicking.
 
 ## Planned Features
-- [ ] Add a settings page
+- [x] Add a settings page
+- [ ] Display a real-time preview under the settings page
 - [ ] Implement a context menu to quickly change settings
 
 ## Settings
@@ -21,7 +22,7 @@ To customize the counter, you will need to manually set your preferences by ente
 | Key                      | Description                    | Default |
 | ------------------------ | ------------------------------ | ------- |
 | `autoRotation`           | Rotate between counters        | `false` |
-| `autoRotationDelay`      | Delay between rotations        | `3e4`   |
+| `autoRotationDelay`      | Delay between rotations        | `5e3`   |
 | `autoRotationHoverPause` | Pause the rotation upon hover  | `true`  |
 | `preserveLastCounter`    | Remember the last counter      | `false` |
 | `online`                 | Enable online counter          | `true`  |

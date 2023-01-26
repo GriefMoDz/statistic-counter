@@ -25,7 +25,7 @@ export function findInReactTree(node: JSX.Element | JSX.Element[], predicate: Pr
 export function forceUpdate(element: Element | null): void {
   if (!element) return;
 
-  const instance = util.getOwnerInstance<React.Component & Record<string, unknown>>(element);
+  const instance = util.getOwnerInstance(element);
   if (instance) {
     const forceRerender = inject.instead(instance, 'render', () => {
       forceRerender();

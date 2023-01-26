@@ -4,19 +4,17 @@ import '../main.css';
 
 import { common, webpack } from 'replugged';
 import { ActionTypes, Counters } from '@lib/constants';
-import type { CounterState, Flux, GuildAvailabilityStore, RelationshipStore, PresenceStore } from '@types';
-import type { FluxDispatcher } from 'replugged/dist/renderer/modules/webpack/common';
+import type { CounterState, GuildAvailabilityStore, RelationshipStore, PresenceStore } from '@types';
 
-const Flux = common.flux as unknown as Flux;
-const FluxDispatcher = common.fluxDispatcher as unknown as FluxDispatcher;
+const FluxDispatcher = common.fluxDispatcher;
 
 const { getExportsForProps } = webpack;
 
 const Messages = webpack.getByProps('Messages', 'getLanguages')?.Messages as Record<string, unknown>;
 
-const RelationshipStore: RelationshipStore = await webpack.waitForModule<any>(webpack.filters.byProps('getRelationships'));
-const PresenceStore: PresenceStore = await webpack.waitForModule<any>(webpack.filters.byProps('isMobileOnline'));
-const GuildAvailabilityStore: GuildAvailabilityStore = await webpack.waitForModule<any>(webpack.filters.byProps('totalGuilds'));
+const RelationshipStore = await webpack.waitForModule<RelationshipStore>(webpack.filters.byProps('getRelationships'));
+const PresenceStore = await webpack.waitForModule<PresenceStore>(webpack.filters.byProps('isMobileOnline'));
+const GuildAvailabilityStore = await webpack.waitForModule<GuildAvailabilityStore>(webpack.filters.byProps('totalGuilds'));
 
 const RelationshipTypes = (await webpack
   .waitForModule<{ [key: number]: string }>(webpack.filters.byProps('IMPLICIT'))
@@ -76,7 +74,7 @@ function Counter(): JSX.Element {
         <IntervalWrapper
           className='statistic-counter'
           onInterval={handleOnInterval}
-          interval={settings.get('autoRotationDelay', 3e4)}
+          interval={settings.get('autoRotationDelay', 5e3)}
           disable={activeCounter === nextCounter || !settings.get('autoRotation', false)}
           pauseOnHover={!!settings.get('autoRotationHoverPause', true)}>
           <span className={activeCounter !== nextCounter ? 'clickable' : ''} onClick={handleOnClick}>

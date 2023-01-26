@@ -1,14 +1,17 @@
-import { Injector, Logger, util, webpack } from 'replugged';
+import { Injector, Logger, settings, util, webpack } from 'replugged';
 import { findInReactTree, forceUpdate } from '@lib/util';
-import { PLUGIN_ID } from '@lib/constants';
+import { DefaultSettings, PLUGIN_ID } from '@lib/constants';
 import { Counter } from '@components';
 
-import type { GuildClasses, GuildsNavComponent } from '@types';
+import type { CounterSettings, GuildClasses, GuildsNavComponent } from '@types';
 
 const inject = new Injector();
 const logger = Logger.plugin(PLUGIN_ID.replace(/-/g, ' '), '#3ba55c');
 
 let GuildClasses: GuildClasses;
+
+export const prefs = await settings.init<CounterSettings, keyof typeof DefaultSettings>('xyz.griefmodz.StatisticCounter', DefaultSettings);
+export { Settings } from '@components';
 
 export async function start(): Promise<void> {
   GuildClasses = await webpack.waitForModule<GuildClasses>(webpack.filters.byProps('guilds', 'sidebar'));

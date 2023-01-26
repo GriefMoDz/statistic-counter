@@ -29,3 +29,13 @@
   position: relative;
   width: 72px;
 }
+
+.statistic-counter-settings-slider {
+  width: 97%;
+  margin: auto;
+  margin-bottom: 15px;
+}
+
+.statistic-counter-settings-slider [class|='mark'] {
+  white-space: nowrap;
+}
