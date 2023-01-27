@@ -8,11 +8,11 @@ Formally known as "Online Friends Count", this is a Replugged plug-in that has b
 
 ## Planned Features
 - [x] Add a settings page
-- [ ] Display a real-time preview under the settings page
+- [x] Display a real-time preview under the settings page
 - [ ] Implement a context menu to quickly change settings
 
 ## Settings
-To customize the counter, you will need to manually set your preferences by entering the following method under your DevTools console (`Ctrl` + `Shift` + `I` and click on the "Console" tab):
+To customize the counter, you can use the settings page or manually set your preferences by entering the following method under your DevTools console (`Ctrl` + `Shift` + `I` and click on the "Console" tab):
 
 ```js
 // Replace the `key` and `value` respectively - you can use the table below as a reference

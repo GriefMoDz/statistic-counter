@@ -1,6 +1,6 @@
 {
   "name": "statistic-counter",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A Replugged plug-in that has been ported from Powercord which introduces an interchangeable statistic counter in-between the home button and servers list.",
   "engines": {
     "node": ">=14.0.0"
