@@ -30,6 +30,14 @@
   width: 72px;
 }
 
+.revert-icon {
+  margin-left: 2px;
+  display: inline-block;
+  vertical-align: top;
+  color: var(--text-brand);
+  cursor: pointer;
+}
+
 .statistic-counter-preview {
   display: flex;
   flex-direction: column;
@@ -47,12 +55,12 @@
   justify-content: center;
   border-radius: 50%;
   background-color: var(--background-secondary);
-  transition: border-radius 0.15s ease-out, background-color 0.15s ease-out, color 0.15s ease-out;
+  transition: border-radius .15s ease-out, background-color .15s ease-out, color .15s ease-out;
   margin: 8px 0;
 }
 
 .statistic-counter-preview .home-button:hover {
-  border-radius: 15%;
+  border-radius: 35%;
   background-color: var(--brand-experiment);
 }
 

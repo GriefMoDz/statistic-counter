@@ -40,7 +40,7 @@ const IntervalWrapper: any = webpack.getBySource(/defaultProps={disable:!1,pause
 const useStateFromStoresMod = await webpack.waitForModule<any>(webpack.filters.bySource('useStateFromStores'));
 const useStateFromStores: any = webpack.getFunctionBySource('useStateFromStores', useStateFromStoresMod);
 
-function Counter(): JSX.Element {
+function Counter(props: { preview?: boolean }): JSX.Element {
   const { activeCounter, nextCounter, counters, settings }: CounterState = useStateFromStores(
     [CounterStore, RelationshipStore, PresenceStore, GuildAvailabilityStore],
     () => ({
@@ -55,7 +55,7 @@ function Counter(): JSX.Element {
   );
 
   const goToNextCounter = () => {
-    if (settings.get('preserveLastCounter', false)) {
+    if (!props.preview && settings.get('preserveLastCounter', false)) {
       settings.set('lastCounter', CounterStore.nextCounter);
     }
 

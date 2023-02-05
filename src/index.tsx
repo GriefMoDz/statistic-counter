@@ -41,7 +41,7 @@ export async function patchGuildsNav(): Promise<void> {
       let StatisticCounterIndex = 2;
 
       const FavouritesIndex = NavScroll.props.children.findIndex((child: React.ReactElement) => child?.type?.toString()?.includes('favorites'));
-      if (FavouritesIndex) {
+      if (FavouritesIndex !== -1) {
         StatisticCounterIndex = FavouritesIndex + 1;
       } else {
         const HomeButtonIndex = NavScroll.props.children.findIndex((child: React.ReactElement) => child?.type?.toString()?.includes('getHomeLink'));
@@ -60,5 +60,5 @@ export async function patchGuildsNav(): Promise<void> {
 
   const end = performance.now();
 
-  logger.log(`“GuildsNav” patched, took ${end - start} ms`);
+  logger.log(`“GuildsNav” patched, took ${Math.round(end - start)} ms`);
 }

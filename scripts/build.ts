@@ -80,10 +80,10 @@ const common: esbuild.BuildOptions = {
   bundle: true,
   format: "esm" as esbuild.Format,
   logLevel: "info",
-  minify: false,
+  minify: true,
   platform: "browser",
   plugins: [globalModules, install],
-  sourcemap: true,
+  sourcemap: false,
   target: `chrome${CHROME_VERSION}`,
   watch,
 };

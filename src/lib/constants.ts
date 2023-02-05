@@ -8,7 +8,7 @@ export const ActionTypes = {
 
 export const DefaultSettings: Partial<CounterSettings> = {
   autoRotation: false,
-  autoRotationDelay: 3e4,
+  autoRotationDelay: 5e3,
   autoRotationHoverPause: true,
   preserveLastCounter: false,
   online: true,
