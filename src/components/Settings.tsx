@@ -1,28 +1,110 @@
-import { common, components, util, webpack } from 'replugged';
-import { ReactComponent } from 'replugged/dist/types';
+import type { ModuleExports } from 'replugged/dist/types';
 
+import { common, components, util, webpack } from 'replugged';
+
+import { CounterItemsProps, CounterType, DragHook, DragSourceHook } from '@types';
 import { ActionTypes, Counters, DefaultSettings } from '@lib/constants';
-import { CounterType } from '@types';
-import { prefs } from '../';
+import { prefs } from '@index';
 
 import CounterStore from '@lib/store';
 import Counter from './Counter';
 
-const { React } = common;
-const { Divider, SwitchItem, Text, Tooltip } = components;
+const { Messages } = common.i18n;
+const { React, fluxDispatcher } = common;
+const { Divider, Slider, SwitchItem, Text, Tooltip } = components;
 
-const SliderModule = await webpack.waitForModule<any>(webpack.filters.bySource('moveStaggered'));
-const Slider = webpack.getFunctionBySource('moveStaggered', SliderModule) as ReactComponent<{}>;
-const Messages = webpack.getByProps('Messages', 'getLanguages')?.Messages as Record<string, string>;
+const states = new Map<string, boolean>();
 
-const states = new Map();
+const useDragSource: DragSourceHook = await webpack.waitForModule<ModuleExports & DragSourceHook>(webpack.filters.bySource(/draggingId:\w{1,2}/));
+const useDrag: DragHook = await webpack.waitForModule<ModuleExports & DragHook>(
+  webpack.filters.bySource(/drop:function\(\){return{optionId:\w{1,2}}}/)
+);
+
+function CounterItems(props: CounterItemsProps): React.ReactElement {
+  const { handleDragComplete, handleDragReset, handleDragStart } = useDragSource(
+    props.availableCounters.map((counter) => ({
+      id: counter,
+      name: Messages[Counters[counter].translationKey]
+    })),
+    (counters) => props.onChange(Object.values(counters).map((counter) => counter.id) as CounterType[])
+  );
+
+  return (
+    <div className='statistic-counter-items'>
+      {props.availableCounters.map((counter: CounterType) => (
+        <CounterItem
+          counter={counter}
+          availableCounters={props.availableCounters}
+          onDragComplete={handleDragComplete}
+          onDragReset={handleDragReset}
+          onDragStart={handleDragStart}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface CounterItemProps {
+  counter: CounterType;
+  availableCounters: CounterType[];
+  onDragStart: (optionId: string | number) => void;
+  onDragComplete: (optionId: string | number) => void;
+  onDragReset: () => void;
+}
+
+function CounterItem(props: CounterItemProps): React.ReactElement {
+  const index = props.availableCounters.findIndex((counter) => props.counter === counter);
+
+  const { drag, dragSourcePosition, drop, setIsDraggable } = useDrag({
+    type: 'STATISTIC_COUNTER_SETTINGS_COUNTER_ITEM',
+    index,
+    optionId: props.counter,
+    onDragStart: props.onDragStart,
+    onDragComplete: props.onDragComplete,
+    onDragReset: props.onDragReset
+  });
+
+  return (
+    <div
+      className={[
+        'statistic-counter-item-container',
+        dragSourcePosition !== null && index < dragSourcePosition && 'drop-indicator-before',
+        dragSourcePosition !== null && index > dragSourcePosition && 'drop-indicator-after'
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      ref={(element) => drag(drop(element))}
+      onMouseEnter={() => setIsDraggable(true)}
+      onMouseLeave={() => setIsDraggable(false)}>
+      <div className='statistic-counter-item-pill'>
+        <div className='drag-icon'>
+          <svg aria-hidden='true' role='img' width='16' height='16' viewBox='0 0 4 14'>
+            <g fill='none' fill-rule='evenodd'>
+              <ellipse fill='currentColor' cx='3.75' cy='1' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='3.75' cy='4.61111107' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='0' cy='4.61111107' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='3.75' cy='8.22222227' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='0' cy='8.22222227' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='3.75' cy='11.83333337' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='0' cy='11.83333337' rx='1.125' ry='1.08333333'></ellipse>
+              <ellipse fill='currentColor' cx='0' cy='1' rx='1.125' ry='1.08333333'></ellipse>
+            </g>
+          </svg>
+        </div>
+        <Text lineClamp={1} variant='heading-sm/semibold'>
+          {Messages[Counters[props.counter].translationKey]}
+        </Text>
+      </div>
+    </div>
+  );
+}
 
 function CounterSettings(): React.ReactElement[] {
-  const [ _, forceUpdate ] = React.useState({});
+  const [_, forceUpdate] = React.useState({});
 
-  // @ts-expect-error Yeah... whatever.
-  return Object.keys(Counters).map((counter: CounterType) => {
-    const counterName = Messages[Counters[counter].translationKey] as string;
+  return Object.keys(Counters).map((key) => {
+    const counter = key as CounterType;
+    const counterName = Messages[Counters[counter].translationKey];
     const useCounter = util.useSetting(prefs, counter);
 
     return (
@@ -33,19 +115,20 @@ function CounterSettings(): React.ReactElement[] {
           states.set(counter, newValue);
           useCounter.onChange(newValue);
 
-          if (newValue === false) {
+          if (!newValue) {
             const { activeCounter, nextCounter } = CounterStore.state;
 
-            activeCounter === counter &&
-              common.fluxDispatcher.dispatch({
-                type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
+            if (activeCounter === counter) {
+              fluxDispatcher.dispatch({
+                type: ActionTypes.STATISTIC_COUNTER_SET_ACTIVE,
                 counter: nextCounter
               });
+            }
           }
 
           forceUpdate({});
         }}>
-        Show {counterName}
+        {Messages.STATISTIC_COUNTER_SHOW_COUNTER.format({ counter: counterName })}
       </SwitchItem>
     );
   });
@@ -70,42 +153,46 @@ function Preview(): React.ReactElement {
   );
 }
 
-const checkDefaultSettings = () => ({
-  VISIBILITY: prefs.get('online') !== DefaultSettings.online ||
-    prefs.get('friends') !== DefaultSettings.friends ||
-    prefs.get('pending') !== DefaultSettings.pending ||
-    prefs.get('blocked') !== DefaultSettings.blocked ||
-    prefs.get('guilds') !== DefaultSettings.guilds ||
+const checkDefaultSettings = (): Record<'VIEW_ORDER' | 'VISIBILITY' | 'AUTO_ROTATION', boolean> => ({
+  VIEW_ORDER: JSON.stringify(prefs.get('viewOrder')) !== JSON.stringify(DefaultSettings.viewOrder),
+  VISIBILITY:
+    Object.keys(Counters).some((counter) => prefs.get(counter as CounterType) !== DefaultSettings[counter as CounterType]) ||
     prefs.get('preserveLastCounter') !== DefaultSettings.preserveLastCounter,
-  AUTO_ROTATION: prefs.get('autoRotation') !== DefaultSettings.autoRotation ||
+  AUTO_ROTATION:
+    prefs.get('autoRotation') !== DefaultSettings.autoRotation ||
     prefs.get('autoRotationDelay') !== DefaultSettings.autoRotationDelay ||
     prefs.get('autoRotationHoverPause') !== DefaultSettings.autoRotationHoverPause
 });
 
 const marginBottom15 = Object.freeze({ marginBottom: 15 });
-const ResetIcon = (props: { onClick: () => void }) => <Tooltip text={Messages.RESET_TO_DEFAULT}>
-  <svg className='revert-icon' width='16' height='16' viewBox='0 0 24 24' onClick={props.onClick}>
-    <path fill='currentColor' d={Icons.REVERT} />
-  </svg>
-</Tooltip>;
+const ResetIcon = (props: { onClick: () => void }): React.ReactElement => (
+  <Tooltip text={Messages.RESET_TO_DEFAULT}>
+    <svg className='statistic-counter-settings-revert-icon' width='16' height='16' viewBox='0 0 24 24' onClick={props.onClick}>
+      <path fill='currentColor' d={Icons.REVERT} />
+    </svg>
+  </Tooltip>
+);
 
 function Settings(): React.ReactElement {
   const useAutoRotation = util.useSetting(prefs, 'autoRotation');
   const useAutoRotationHoverPause = util.useSetting(prefs, 'autoRotationHoverPause');
   const useAutoRotationDelay = util.useSetting(prefs, 'autoRotationDelay');
   const usePreserveLastCounter = util.useSetting(prefs, 'preserveLastCounter');
+  const useViewOrder = util.useSetting(prefs, 'viewOrder');
 
-  const [ _, forceUpdate ] = React.useState({});
+  const [_, forceUpdate] = React.useState({});
 
-  const handleRotationDelay = (delay: number) => {
+  const handleRotationDelay = (delay: number): void => {
     useAutoRotationDelay.onChange(Math.round(delay));
   };
 
-  const handleVisibilityReset = () => {
+  const handleViewOrderReset = (): void => useViewOrder.onChange(DefaultSettings.viewOrder);
+
+  const handleVisibilityReset = (): void => {
     Object.keys(DefaultSettings)
       .filter((key) => Object.keys(Counters).includes(key))
       .forEach((counter) => {
-        prefs.set(counter, true);
+        prefs.set(counter as CounterType, true);
         states.set(counter, true);
 
         forceUpdate({});
@@ -114,40 +201,45 @@ function Settings(): React.ReactElement {
     usePreserveLastCounter.onChange(DefaultSettings.preserveLastCounter);
   };
 
-  const handleAutoRotationReset = () => {
+  const handleAutoRotationReset = (): void => {
     useAutoRotation.onChange(DefaultSettings.autoRotation);
     useAutoRotationDelay.onChange(DefaultSettings.autoRotationDelay);
     useAutoRotationHoverPause.onChange(DefaultSettings.autoRotationHoverPause);
-  }
+  };
 
-  const handleSliderRender = (value: number) => {
+  const handleSliderRender = (value: number): string => {
     const seconds = value / 1000;
     const minutes = value / 1000 / 60;
-    return value < 6e4 ? `${seconds.toFixed(0)} secs` : `${minutes.toFixed(0)} min${Math.round(minutes) > 1 ? 's' : ''}`;
-  }
+    return value < 6e4 ? Messages.DURATION_SECS.format({ secs: seconds.toFixed(0) }) : Messages.DURATION_MINS.format({ mins: minutes.toFixed(0) });
+  };
 
   return (
     <div>
       <Text.Eyebrow style={marginBottom15} color='header-secondary'>
-        Preview
+        {Messages.FORM_LABEL_VIDEO_PREVIEW}
       </Text.Eyebrow>
       {Preview()}
       <Text.Eyebrow style={marginBottom15} color='header-secondary'>
-        Visibility
-        {checkDefaultSettings().VISIBILITY && <ResetIcon onClick={handleVisibilityReset}/>}
+        {Messages.STATISTIC_COUNTER_VIEW_ORDER}
+        {checkDefaultSettings().VIEW_ORDER && <ResetIcon onClick={handleViewOrderReset} />}
+      </Text.Eyebrow>
+      <CounterItems availableCounters={useViewOrder.value} onChange={useViewOrder.onChange} />
+      <Text.Eyebrow style={marginBottom15} color='header-secondary'>
+        {Messages.STATISTIC_COUNTER_VISIBILITY}
+        {checkDefaultSettings().VISIBILITY && <ResetIcon onClick={handleVisibilityReset} />}
       </Text.Eyebrow>
       {CounterSettings()}
-      <SwitchItem {...usePreserveLastCounter}>Preserve Last Counter</SwitchItem>
+      <SwitchItem {...usePreserveLastCounter}>{Messages.STATISTIC_COUNTER_PRESERVE_LAST_COUNTER}</SwitchItem>
       <Text.Eyebrow style={marginBottom15} color='header-secondary'>
-        Auto Rotation
-        {checkDefaultSettings().AUTO_ROTATION && <ResetIcon onClick={handleAutoRotationReset}/>}
+        {Messages.STATISTIC_COUNTER_AUTO_ROTATION}
+        {checkDefaultSettings().AUTO_ROTATION && <ResetIcon onClick={handleAutoRotationReset} />}
       </Text.Eyebrow>
-      <SwitchItem {...useAutoRotation}>Enabled</SwitchItem>
+      <SwitchItem {...useAutoRotation}>{Messages.USER_SETTINGS_MFA_ENABLED}</SwitchItem>
 
       {useAutoRotation.value && (
         <>
           <Text.Eyebrow style={marginBottom15} color='header-secondary'>
-            Rotate Interval
+            {Messages.STATISTIC_COUNTER_ROTATION_INTERVAL}
           </Text.Eyebrow>
           <Slider
             className='statistic-counter-settings-slider'
@@ -162,7 +254,7 @@ function Settings(): React.ReactElement {
             onValueChange={handleRotationDelay}
           />
           <Divider style={marginBottom15} />
-          <SwitchItem {...useAutoRotationHoverPause}>Pause on Hover</SwitchItem>
+          <SwitchItem {...useAutoRotationHoverPause}>{Messages.STATISTIC_COUNTER_PAUSE_ON_HOVER}</SwitchItem>
         </>
       )}
     </div>

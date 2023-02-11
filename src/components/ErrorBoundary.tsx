@@ -1,5 +1,5 @@
-import { common } from 'replugged';
 import type { ErrorBoundaryState } from '@types';
+import { common } from 'replugged';
 
 const { React } = common;
 
@@ -12,7 +12,7 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, React.Compo
     return { hasError: true };
   }
 
-  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     console.log(
       '%c[ErrorBoundary:StatisticCounter]',
       'color: #f04747;',
@@ -21,7 +21,7 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, React.Compo
     );
   }
 
-  public render() {
+  public render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <div className='statistic-counter-list-item'>

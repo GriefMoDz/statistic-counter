@@ -1,16 +1,25 @@
+import type { ModuleExports, ObjectExports } from 'replugged/dist/types';
+import type {
+  CounterState,
+  GuildAvailabilityStore,
+  IntervalWrapper,
+  PresenceStore,
+  RelationshipCounts,
+  RelationshipStore,
+  UseStateFromStores
+} from '@types';
+
 import CounterStore from '@lib/store';
+import ContextMenu from './ContextMenu';
 import ErrorBoundary from './ErrorBoundary';
-import '../main.css';
 
 import { common, webpack } from 'replugged';
 import { ActionTypes, Counters } from '@lib/constants';
-import type { CounterState, GuildAvailabilityStore, RelationshipStore, PresenceStore } from '@types';
 
 const FluxDispatcher = common.fluxDispatcher;
 
 const { getExportsForProps } = webpack;
-
-const Messages = webpack.getByProps('Messages', 'getLanguages')?.Messages as Record<string, unknown>;
+const { Messages } = common.i18n;
 
 const RelationshipStore = await webpack.waitForModule<RelationshipStore>(webpack.filters.byProps('getRelationships'));
 const PresenceStore = await webpack.waitForModule<PresenceStore>(webpack.filters.byProps('isMobileOnline'));
@@ -18,14 +27,10 @@ const GuildAvailabilityStore = await webpack.waitForModule<GuildAvailabilityStor
 
 const RelationshipTypes = (await webpack
   .waitForModule<{ [key: number]: string }>(webpack.filters.byProps('IMPLICIT'))
-  .then((mod) => getExportsForProps(mod, ['IMPLICIT']))) as any;
+  .then((mod) => getExportsForProps(mod, ['IMPLICIT']))) as Record<string, string | number>;
 
-type RelationshipCounts = {
-  [key: string]: number;
-};
-
-function getRelationshipCounts() {
-  const relationshipTypes = Object.keys(RelationshipTypes).filter((type) => isNaN(+type));
+function getRelationshipCounts(): RelationshipCounts {
+  const relationshipTypes = Object.keys(RelationshipTypes).filter((type) => isNaN(Number(type)));
   const relationshipCounts: RelationshipCounts = relationshipTypes.reduce((types, type) => ({ ...types, [type]: 0 }), {});
   const relationships = RelationshipStore.getRelationships();
 
@@ -36,11 +41,11 @@ function getRelationshipCounts() {
   return relationshipCounts;
 }
 
-const IntervalWrapper: any = webpack.getBySource(/defaultProps={disable:!1,pauseOnHover:!1}/);
-const useStateFromStoresMod = await webpack.waitForModule<any>(webpack.filters.bySource('useStateFromStores'));
-const useStateFromStores: any = webpack.getFunctionBySource('useStateFromStores', useStateFromStoresMod);
+const IntervalWrapper: IntervalWrapper = webpack.getBySource<ModuleExports & IntervalWrapper>(/defaultProps={disable:!1,pauseOnHover:!1}/)!;
+const useStateFromStoresMod = await webpack.waitForModule<ObjectExports>(webpack.filters.bySource('useStateFromStores'));
+const useStateFromStores: UseStateFromStores = webpack.getFunctionBySource('useStateFromStores', useStateFromStoresMod)!;
 
-function Counter(props: { preview?: boolean }): JSX.Element {
+function Counter(props: { preview?: boolean }): React.ReactElement {
   const { activeCounter, nextCounter, counters, settings }: CounterState = useStateFromStores(
     [CounterStore, RelationshipStore, PresenceStore, GuildAvailabilityStore],
     () => ({
@@ -54,19 +59,21 @@ function Counter(props: { preview?: boolean }): JSX.Element {
     })
   );
 
-  const goToNextCounter = () => {
+  const goToNextCounter = (): void => {
     if (!props.preview && settings.get('preserveLastCounter', false)) {
       settings.set('lastCounter', CounterStore.nextCounter);
     }
 
     FluxDispatcher.dispatch({
-      type: ActionTypes.STATISTICS_COUNTER_SET_ACTIVE,
+      type: ActionTypes.STATISTIC_COUNTER_SET_ACTIVE,
       counter: CounterStore.nextCounter
     });
   };
 
-  const handleOnClick = goToNextCounter;
+  // @ts-expect-error Render parameter type is incorrect, so let's ignore this for now...
+  const handleOnContextMenu = (event: React.UIEvent): void => !props.preview && common.contextMenu.open(event, (props) => <ContextMenu {...props} />);
   const handleOnInterval = goToNextCounter;
+  const handleOnClick = goToNextCounter;
 
   return (
     <div className='statistic-counter-list-item'>
@@ -76,8 +83,8 @@ function Counter(props: { preview?: boolean }): JSX.Element {
           onInterval={handleOnInterval}
           interval={settings.get('autoRotationDelay', 5e3)}
           disable={activeCounter === nextCounter || !settings.get('autoRotation', false)}
-          pauseOnHover={!!settings.get('autoRotationHoverPause', true)}>
-          <span className={activeCounter !== nextCounter ? 'clickable' : ''} onClick={handleOnClick}>
+          pauseOnHover={Boolean(settings.get('autoRotationHoverPause', true))}>
+          <span className={activeCounter !== nextCounter ? 'clickable' : ''} onClick={handleOnClick} onContextMenu={handleOnContextMenu}>
             {Messages[Counters[activeCounter].translationKey]} — {counters[Counters[activeCounter].storeKey]}
           </span>
         </IntervalWrapper>

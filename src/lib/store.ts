@@ -1,21 +1,15 @@
-import { common, settings } from 'replugged';
-import { SettingsManager } from 'replugged/dist/renderer/apis/settings';
-
+import type { CounterSettings, CounterStoreState, CounterStore as CounterStoreType, CounterType } from '@types';
 import type { Store } from 'replugged/dist/renderer/modules/webpack/common/flux';
-import type { CounterSettings, CounterStore as CounterStoreType, CounterType } from '@types';
 
-const Flux = common.flux;
-const FluxDispatcher = common.fluxDispatcher;
+import { SettingsManager } from 'replugged/dist/renderer/apis/settings';
+import { common, settings } from 'replugged';
 
 import { ActionTypes, Counters, DefaultSettings } from '@lib/constants';
 
+const { flux: Flux, fluxDispatcher: FluxDispatcher } = common;
+
 const prefs = await settings.init<CounterSettings, keyof typeof DefaultSettings>('xyz.griefmodz.StatisticCounter', DefaultSettings);
 let activeCounter = prefs.get('lastCounter');
-
-interface CounterStoreState {
-  activeCounter: CounterType | string;
-  nextCounter: CounterType | string;
-}
 
 class CounterStore extends Flux.Store {
   public static displayName = 'StatisticCounterStore';
@@ -32,12 +26,11 @@ class CounterStore extends Flux.Store {
   }
 
   public get filteredCounters(): Array<CounterType | string> {
-    // @ts-expect-error Yeah... whatever.
-    return Object.keys(Counters).filter((counter: CounterType) => prefs.get(counter, true));
+    return Object.keys(Counters).filter((counter) => prefs.get(counter as CounterType, true));
   }
 
   public get nextCounter(): CounterType | string {
-    const counters = this.filteredCounters;
+    const counters = prefs.get('viewOrder', Object.keys(Counters) as CounterType[]).filter((counter) => this.filteredCounters.includes(counter));
     const currentIndex = counters.indexOf(activeCounter || counters[0]);
 
     return currentIndex >= counters.length - 1 ? counters[0] : counters[currentIndex + 1];
@@ -46,5 +39,5 @@ class CounterStore extends Flux.Store {
 
 export default (Flux.Store?.getAll?.().find((store: Store) => store.getName() === CounterStore.displayName) ||
   new CounterStore(FluxDispatcher, {
-    [ActionTypes.STATISTICS_COUNTER_SET_ACTIVE]: ({ counter }) => (activeCounter = counter)
+    [ActionTypes.STATISTIC_COUNTER_SET_ACTIVE]: ({ counter }) => (activeCounter = counter)
   })) as CounterStoreType;

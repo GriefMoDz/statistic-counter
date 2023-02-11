@@ -1,10 +1,12 @@
-import { Injector, util } from 'replugged';
+import type { Predicate } from '@types';
 
-const inject = new Injector();
+import { util } from 'replugged';
+import { inject } from '@index';
 
-export type Predicate<Arg> = (arg: Arg) => boolean;
-
-export function findInReactTree(node: JSX.Element | JSX.Element[], predicate: Predicate<JSX.Element>): JSX.Element | null {
+export function findInReactTree(
+  node: React.ReactElement | React.ReactElement[],
+  predicate: Predicate<React.ReactElement>
+): React.ReactElement | null {
   const stack = [node].flat();
 
   while (stack.length !== 0) {

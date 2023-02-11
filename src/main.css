@@ -30,14 +30,6 @@
   width: 72px;
 }
 
-.revert-icon {
-  margin-left: 2px;
-  display: inline-block;
-  vertical-align: top;
-  color: var(--text-brand);
-  cursor: pointer;
-}
-
 .statistic-counter-preview {
   display: flex;
   flex-direction: column;
@@ -55,7 +47,7 @@
   justify-content: center;
   border-radius: 50%;
   background-color: var(--background-secondary);
-  transition: border-radius .15s ease-out, background-color .15s ease-out, color .15s ease-out;
+  transition: border-radius 0.15s ease-out, background-color 0.15s ease-out, color 0.15s ease-out;
   margin: 8px 0;
 }
 
@@ -72,12 +64,96 @@
   color: var(--text-normal);
 }
 
+.statistic-counter-settings-revert-icon {
+  margin-left: 2px;
+  display: inline-block;
+  vertical-align: top;
+  color: var(--text-brand);
+  cursor: pointer;
+}
+
 .statistic-counter-settings-slider {
   width: 97%;
-  margin: auto;
-  margin-bottom: 15px;
+  margin: auto auto 15px;
 }
 
 .statistic-counter-settings-slider [class|='mark'] {
   white-space: nowrap;
+}
+
+.statistic-counter-items {
+  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.statistic-counter-item-container.drop-indicator-before:before {
+  left: -5px;
+}
+
+.statistic-counter-item-container.drop-indicator-after:after,
+.statistic-counter-item-container.drop-indicator-before:before {
+  background-color: var(--brand-experiment);
+  border-radius: 2px;
+  content: '';
+  width: 2px;
+  height: 100%;
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.statistic-counter-item-container.drop-indicator-after:after {
+  right: -5px;
+}
+
+.statistic-counter-item-container {
+  position: relative;
+  cursor: grab;
+}
+
+.statistic-counter-item-pill {
+  border-radius: 5px 20px 20px 5px;
+  background-color: var(--background-secondary-alt);
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  overflow: hidden;
+}
+
+.statistic-counter-item-pill:hover {
+  background-color: var(--background-modifier-hover);
+  transition: background-color 0.15s ease-out;
+}
+
+.statistic-counter-item-pill:active {
+  background-color: transparent;
+  border: 2px dotted var(--background-modifier-selected);
+  cursor: grabbing;
+}
+
+.statistic-counter-item-pill:active * {
+  visibility: hidden;
+}
+
+.statistic-counter-item-pill .drag-icon {
+  display: flex;
+  margin-left: -15px;
+  color: var(--interactive-normal);
+  padding: 8px;
+  cursor: grab;
+}
+
+.statistic-counter-item-pill:hover .drag-icon {
+  color: var(--interactive-hover);
+}
+
+.statistic-counter-item-pill .drag-icon:active {
+  cursor: grabbing;
 }

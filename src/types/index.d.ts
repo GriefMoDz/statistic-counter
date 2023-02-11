@@ -1,21 +1,41 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import type { Store } from 'replugged/dist/renderer/modules/webpack/common/flux';
 import type { SettingsManager } from 'replugged/dist/renderer/apis/settings';
-import type { RawModule } from 'replugged/dist/types';
+import type { RawModule, ReactComponent } from 'replugged/dist/types';
 import type { Counters } from '@lib/constants';
 
-export type Comparator<T> = (a: T, b: T) => boolean;
+type Comparator<T> = (a: T, b: T) => boolean;
+type Predicate<Arg> = (arg: Arg) => boolean;
 
-export interface ErrorBoundaryState {
+interface RelationshipCounts {
+  [key: string]: number;
+}
+
+type UseStateFromStores = <T>(stores: Store[], callback: () => T, deps?: React.DependencyList, compare?: Comparator<T>) => T;
+
+interface IntervalWrapperProps {
+  interval: number;
+  children: React.ReactNode;
+}
+
+type IntervalWrapper = ReactComponent<IntervalWrapperProps> & {
+  getDerivedStateFromProps: (props: { disable: boolean }) => { hovered: false } | null;
+  defaultProps: {
+    disable: boolean;
+    pauseOnHover: boolean;
+  };
+};
+
+interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-export interface GuildsNavProps {
+interface GuildsNavProps {
   className: string;
   themeOverride: string;
 }
 
-export interface GuildClasses extends RawModule {
+interface GuildClasses extends RawModule {
   activityPanel: string;
   base: string;
   container: string;
@@ -29,7 +49,7 @@ export interface GuildClasses extends RawModule {
   sidebar: string;
 }
 
-export interface GuildsNavClasses {
+interface GuildsNavClasses {
   fixedBottomList: string;
   hidden: string;
   scroller: string;
@@ -41,31 +61,37 @@ export interface GuildsNavClasses {
   wrapper: string;
 }
 
-export interface GuildsNavComponent extends RawModule {
+interface GuildsNavComponent extends RawModule {
   $$typeof: symbol;
   compare: Comparator<unknown>;
   type: (props: GuildsNavProps) => React.ReactElement;
 }
 
-export type CounterType = 'online' | 'friends' | 'pending' | 'blocked' | 'guilds';
-export interface CounterProps {
+type CounterType = 'online' | 'friends' | 'pending' | 'blocked' | 'guilds';
+interface CounterProps {
   storeKey: string;
   translationKey: string;
 }
 
-export interface CounterStore extends Store {
+interface CounterStoreState {
+  activeCounter: CounterType | string;
+  nextCounter: CounterType | string;
+}
+
+interface CounterStore extends Store {
   state: CounterState;
   settings: SettingsManager<CounterSettings>;
   nextCounter: CounterType;
   filteredCounters: CounterType[];
 }
 
-export interface CounterSettings {
+interface CounterSettings {
   autoRotation?: boolean;
   autoRotationDelay?: number;
   autoRotationHoverPause?: boolean;
   preserveLastCounter?: boolean;
   lastCounter?: CounterType;
+  viewOrder?: CounterType[];
   online?: boolean;
   friends?: boolean;
   pending?: boolean;
@@ -73,15 +99,59 @@ export interface CounterSettings {
   guilds?: boolean;
 }
 
-export interface CounterState {
+interface CounterState {
   activeCounter: CounterType;
   nextCounter: CounterType;
   settings: SettingsManager<CounterSettings>;
   counters: Counters;
 }
 
-export type Snowflake = string;
-export const enum RelationshipTypes {
+type DragHook = (args: {
+  type: string;
+  index: number;
+  optionId: string | number;
+  onDragStart: (optionId: string | number) => void;
+  onDragComplete: (optionId: string | number) => void;
+  onDragReset: () => void;
+}) => {
+  dragSourcePosition: number;
+  drag: (element: HTMLDivElement | null) => HTMLDivElement;
+  drop: (element: HTMLDivElement | null) => HTMLDivElement;
+  setIsDraggable: (state: boolean) => void;
+};
+
+interface DragSourceItem {
+  id: string;
+  name?: string;
+}
+
+type DragSourceHook = (
+  items: DragSourceItem[],
+  callback: (items: DragSourceItem[]) => void
+) => {
+  handleDragStart: (optionId: string | number) => void;
+  handleDragComplete: (optionId: string | number) => void;
+  handleDragReset: () => void;
+};
+interface CounterItemsProps {
+  availableCounters: CounterType[];
+  onChange: (newValue: CounterType[] | (Record<string, unknown> & { value: CounterType[] | undefined }) | undefined) => void;
+}
+
+interface MenuControlItemProps {
+  disabled: boolean;
+  isFocused: boolean;
+  onClose: () => void;
+}
+
+interface MenuControlItemRef {
+  activate: () => boolean;
+  blur: () => void;
+  focus: () => void;
+}
+
+type Snowflake = string;
+const enum RelationshipTypes {
   NONE,
   FRIEND,
   BLOCKED,
@@ -91,7 +161,7 @@ export const enum RelationshipTypes {
   SUGGESTION
 }
 
-export interface RelationshipStore extends RawModule, Store {
+interface RelationshipStore extends RawModule, Store {
   getFriendIDs(): Snowflake[];
   getNickname(userId: string): string;
   getPendingCount(): number;
@@ -108,7 +178,7 @@ export interface RelationshipStore extends RawModule, Store {
   };
 }
 
-export const enum StatusTypes {
+const enum StatusTypes {
   DND = 'dnd',
   IDLE = 'idle',
   INVISIBLE = 'invisible',
@@ -118,7 +188,7 @@ export const enum StatusTypes {
   UNKNOWN = 'unknown'
 }
 
-export interface Activity {
+interface Activity {
   assets?: {
     large_image: string;
     large_text: string;
@@ -145,21 +215,21 @@ export interface Activity {
   type: string;
 }
 
-export interface ClientStatus {
+interface ClientStatus {
   embedded?: StatusTypes;
   desktop?: StatusTypes;
   mobile?: StatusTypes;
   web?: StatusTypes;
 }
 
-export interface UserPresence {
+interface UserPresence {
   activities: Activity[];
   clientStatus: ClientStatus;
   status: StatusTypes;
   timestamp: number;
 }
 
-export interface PresenceStoreState {
+interface PresenceStoreState {
   statuses: Record<Snowflake, StatusTypes>;
   clientStatuses: Record<Snowflake, ClientStatus>;
   activities: Record<Snowflake, Activity[]>;
@@ -167,7 +237,7 @@ export interface PresenceStoreState {
   presencesForGuilds: Record<Snowflake, Record<Snowflake, UserPresence>>;
 }
 
-export interface PresenceStore extends RawModule, Store {
+interface PresenceStore extends RawModule, Store {
   findActivity(userId: Snowflake, predicate: (arg: unknown) => boolean): Activity;
   getActivities(userId: Snowflake): Activity[];
   getActivityMetadata(userId: Snowflake): unknown;
@@ -181,7 +251,7 @@ export interface PresenceStore extends RawModule, Store {
   setCurrentUserOnConnectionOpen(status: StatusTypes, activities: Record<Snowflake, Activity[]>): void;
 }
 
-export interface GuildAvailabilityStore extends RawModule, Store {
+interface GuildAvailabilityStore extends RawModule, Store {
   isUnavailable(guildId: Snowflake): boolean;
   get totalGuilds(): number;
   get totalUnavailableGuilds(): number;
