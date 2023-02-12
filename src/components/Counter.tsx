@@ -18,16 +18,12 @@ import { ActionTypes, Counters } from '@lib/constants';
 
 const FluxDispatcher = common.fluxDispatcher;
 
-const { getExportsForProps } = webpack;
 const { Messages } = common.i18n;
 
-const RelationshipStore = await webpack.waitForModule<RelationshipStore>(webpack.filters.byProps('getRelationships'));
-const PresenceStore = await webpack.waitForModule<PresenceStore>(webpack.filters.byProps('isMobileOnline'));
-const GuildAvailabilityStore = await webpack.waitForModule<GuildAvailabilityStore>(webpack.filters.byProps('totalGuilds'));
-
-const RelationshipTypes = (await webpack
-  .waitForModule<{ [key: number]: string }>(webpack.filters.byProps('IMPLICIT'))
-  .then((mod) => getExportsForProps(mod, ['IMPLICIT']))) as Record<string, string | number>;
+const RelationshipTypes = (await webpack.waitForProps('IMPLICIT')) as Record<string, string | number>;
+const RelationshipStore: RelationshipStore = await webpack.waitForProps(['getRelationships']);
+const PresenceStore: PresenceStore = await webpack.waitForProps(['isMobileOnline']);
+const GuildAvailabilityStore: GuildAvailabilityStore = await webpack.waitForProps(['totalGuilds']);
 
 function getRelationshipCounts(): RelationshipCounts {
   const relationshipTypes = Object.keys(RelationshipTypes).filter((type) => isNaN(Number(type)));
@@ -43,7 +39,7 @@ function getRelationshipCounts(): RelationshipCounts {
 
 const IntervalWrapper: IntervalWrapper = webpack.getBySource<ModuleExports & IntervalWrapper>(/defaultProps={disable:!1,pauseOnHover:!1}/)!;
 const useStateFromStoresMod = await webpack.waitForModule<ObjectExports>(webpack.filters.bySource('useStateFromStores'));
-const useStateFromStores: UseStateFromStores = webpack.getFunctionBySource('useStateFromStores', useStateFromStoresMod)!;
+const useStateFromStores: UseStateFromStores = webpack.getFunctionBySource(useStateFromStoresMod, 'useStateFromStores')!;
 
 function Counter(props: { preview?: boolean }): React.ReactElement {
   const { activeCounter, nextCounter, counters, settings }: CounterState = useStateFromStores(
