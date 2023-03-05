@@ -6,20 +6,25 @@ import { common, components, util, webpack } from 'replugged';
 import { prefs } from '@index';
 
 import CounterStore from '@lib/store';
+import ErrorBoundary from './ErrorBoundary';
 
 const { React, fluxDispatcher } = common;
 const { ContextMenu } = components;
 const { Messages } = common.i18n;
 
-const SliderControl = await webpack.waitForModule<typeof Slider>(webpack.filters.bySource('sliderContainer'));
+const SliderControl = await webpack
+  .waitForModule<typeof Slider>(webpack.filters.bySource('sliderContainer,'))
+  .then((mod) => Object.values(mod).find((mod) => mod?.render?.toString?.().includes('sliderContainer')));
 
 function CounterItems(): React.ReactElement[] {
-  return Object.keys(Counters).map((key) => {
+  const items: React.ReactElement[] = [];
+
+  for (const key in Counters) {
     const counter = key as CounterType;
     const counterName = Messages[Counters[counter].translationKey];
     const currentState = util.useSetting(prefs, counter);
 
-    return (
+    items.push(
       <ContextMenu.MenuCheckboxItem
         id={`show-${counter}`}
         label={Messages.STATISTIC_COUNTER_SHOW_COUNTER.format({ counter: counterName })}
@@ -43,7 +48,9 @@ function CounterItems(): React.ReactElement[] {
         }}
       />
     );
-  });
+  }
+
+  return items;
 }
 
 function VisibilityItems(): React.ReactElement {
@@ -130,7 +137,9 @@ function ContextMenuItems(): React.ReactElement {
 }
 
 export default React.memo((props) => (
-  <ContextMenu.ContextMenu navId='statistic-counter-context-menu' {...props}>
-    {ContextMenuItems()}
-  </ContextMenu.ContextMenu>
+  <ErrorBoundary>
+    <ContextMenu.ContextMenu navId='statistic-counter-context-menu' {...props}>
+      {ContextMenuItems()}
+    </ContextMenu.ContextMenu>
+  </ErrorBoundary>
 ));
