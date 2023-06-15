@@ -7,12 +7,13 @@
     "discordID": "350227339784880130",
     "github": "griefmodz"
   },
-  "version": "1.3.2",
+  "version": "1.3.3",
   "updater": {
-    "type": "github",
-    "id": "griefmodz/statistic-counter"
+    "type": "store",
+    "id": "xyz.griefmodz.StatisticCounter"
   },
   "license": "MIT",
   "type": "replugged-plugin",
-  "renderer": "src/index.tsx"
+  "renderer": "src/index.tsx",
+  "source": "https://github.com/GriefMoDz/statistic-counter"
 }

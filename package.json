@@ -1,9 +1,10 @@
 {
   "name": "statistic-counter",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "A Replugged plug-in that has been ported from Powercord which introduces an interchangeable statistic counter in-between the home button and servers list.",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   },
   "scripts": {
     "build": "replugged build plugin",
@@ -22,16 +23,15 @@
   "license": "MIT",
   "devDependencies": {
     "@types/react": "^18.0.28",
-    "@types/node": "^18.11.2",
-    "@typescript-eslint/eslint-plugin": "^5.49.0",
-    "@typescript-eslint/parser": "^5.40.1",
-    "esbuild": "^0.15.18",
-    "eslint": "^8.25.0",
+    "@types/node": "^18.15.11",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "eslint": "^8.37.0",
     "eslint-config-dmitmel": "github:dmitmel/eslint-config-dmitmel",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-react": "^7.31.10",
-    "prettier": "^2.8.1",
-    "replugged": "4.0.0",
-    "typescript": "^4.8.4"
+    "eslint-plugin-react": "^7.32.2",
+    "prettier": "^2.8.7",
+    "replugged": "^4.4.2",
+    "typescript": "^5.0.3"
   }
 }
