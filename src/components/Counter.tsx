@@ -20,7 +20,7 @@ const FluxDispatcher = common.fluxDispatcher;
 
 const { Messages } = common.i18n;
 
-const RelationshipTypes = (await webpack.waitForProps('IMPLICIT')) as Record<string, string | number>;
+const RelationshipTypes = await webpack.waitForProps<Record<string, string | number>>('IMPLICIT');
 const RelationshipStore: RelationshipStore = await webpack.waitForProps(['getRelationships']);
 const PresenceStore: PresenceStore = await webpack.waitForProps(['isMobileOnline']);
 const GuildAvailabilityStore: GuildAvailabilityStore = await webpack.waitForProps(['totalGuilds']);
@@ -38,8 +38,8 @@ function getRelationshipCounts(): RelationshipCounts {
 }
 
 const IntervalWrapper: IntervalWrapper = webpack.getBySource<ModuleExports & IntervalWrapper>(/defaultProps={disable:!1,pauseOnHover:!1}/)!;
-const useStateFromStoresMod = await webpack.waitForModule<ObjectExports>(webpack.filters.bySource('useStateFromStores'));
-const useStateFromStores: UseStateFromStores = webpack.getFunctionBySource(useStateFromStoresMod, 'useStateFromStores')!;
+const useStateFromStoresMod = await webpack.waitForProps<ObjectExports>('useStateFromStores');
+const useStateFromStores: UseStateFromStores = useStateFromStoresMod.useStateFromStores! as UseStateFromStores;
 
 function Counter(props: { preview?: boolean }): React.ReactElement {
   const { activeCounter, nextCounter, counters, settings }: CounterState = useStateFromStores(

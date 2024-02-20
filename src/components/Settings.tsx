@@ -15,10 +15,10 @@ const { Divider, Slider, SwitchItem, Text, Tooltip } = components;
 
 const states = new Map<string, boolean>();
 
-const useDragSource: DragSourceHook = await webpack.waitForModule<ModuleExports & DragSourceHook>(webpack.filters.bySource(/draggingId:\w{1,2}/));
-const useDrag: DragHook = await webpack.waitForModule<ModuleExports & DragHook>(
-  webpack.filters.bySource(/drop:function\(\){return{optionId:\w{1,2}}}/)
+const { useDragSource }: { useDragSource: DragSourceHook } = await webpack.waitForProps<{ useDragSource: ModuleExports & DragSourceHook }>(
+  'useDragSource'
 );
+const { useDrag }: { useDrag: DragHook } = await webpack.waitForProps<{ useDrag: ModuleExports & DragHook }>('useDrag');
 
 function CounterItems(props: CounterItemsProps): React.ReactElement {
   const { handleDragComplete, handleDragReset, handleDragStart } = useDragSource(

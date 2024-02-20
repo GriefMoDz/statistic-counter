@@ -1,4 +1,4 @@
-import type { CounterType, MenuControlItemProps, MenuControlItemRef } from '@types';
+import type { CounterType, MenuControlItemProps } from '@types';
 import type { Slider } from 'replugged/dist/renderer/modules/components';
 
 import { ActionTypes, Counters, DefaultSettings } from '@lib/constants';
@@ -8,7 +8,7 @@ import { prefs } from '@index';
 import CounterStore from '@lib/store';
 import ErrorBoundary from './ErrorBoundary';
 
-const { React, fluxDispatcher } = common;
+const { React, fluxDispatcher, contextMenu } = common;
 const { ContextMenu } = components;
 const { Messages } = common.i18n;
 
@@ -96,7 +96,7 @@ function AutoRotationItems(): React.ReactElement {
           <ContextMenu.MenuControlItem
             id='rotate-interval'
             label={Messages.STATISTIC_COUNTER_ROTATION_INTERVAL}
-            control={(props: MenuControlItemProps, ref: React.RefObject<MenuControlItemRef>) => (
+            control={(props: MenuControlItemProps, ref) => (
               <SliderControl
                 mini
                 ref={ref}
@@ -138,7 +138,7 @@ function ContextMenuItems(): React.ReactElement {
 
 export default React.memo((props) => (
   <ErrorBoundary>
-    <ContextMenu.ContextMenu navId='statistic-counter-context-menu' {...props}>
+    <ContextMenu.ContextMenu navId='statistic-counter-context-menu' {...props} onClose={contextMenu.close}>
       {ContextMenuItems()}
     </ContextMenu.ContextMenu>
   </ErrorBoundary>
