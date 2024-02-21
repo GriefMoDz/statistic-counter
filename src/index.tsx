@@ -17,7 +17,7 @@ import { Counter, Settings } from '@components';
 export { Settings };
 
 export async function start(): Promise<void> {
-  classes.guildClasses = await webpack.waitForProps<string, GuildClasses>(['guilds', 'sidebar']);
+  classes.guildClasses = await webpack.waitForProps<string, string>(['guilds', 'sidebar']);
 
   i18n.loadAllStrings(translations);
 

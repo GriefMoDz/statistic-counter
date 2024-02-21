@@ -1,8 +1,7 @@
-import type { ModuleExports } from 'replugged/dist/types';
 
 import { common, components, util, webpack } from 'replugged';
 
-import { CounterItemsProps, CounterType, DragHook, DragSourceHook } from '@types';
+import { CounterItemsProps, CounterType, DragProvider } from '@types';
 import { ActionTypes, Counters, DefaultSettings } from '@lib/constants';
 import { prefs } from '@index';
 
@@ -15,30 +14,13 @@ const { Divider, Slider, SwitchItem, Text, Tooltip } = components;
 
 const states = new Map<string, boolean>();
 
-const useDragSource: DragSourceHook = await webpack.waitForModule<ModuleExports & DragSourceHook>(webpack.filters.bySource(/draggingId:\w{1,2}/));
-const useDrag: DragHook = await webpack.waitForModule<ModuleExports & DragHook>(
-  webpack.filters.bySource(/drop:function\(\){return{optionId:\w{1,2}}}/)
-);
+const { useDrag, useDrop } = await webpack.waitForProps<DragProvider>(['useDrag', 'useDrop']);
 
 function CounterItems(props: CounterItemsProps): React.ReactElement {
-  const { handleDragComplete, handleDragReset, handleDragStart } = useDragSource(
-    props.availableCounters.map((counter) => ({
-      id: counter,
-      name: Messages[Counters[counter].translationKey]
-    })),
-    (counters) => props.onChange(Object.values(counters).map((counter) => counter.id) as CounterType[])
-  );
-
   return (
     <div className='statistic-counter-items'>
       {props.availableCounters.map((counter: CounterType) => (
-        <CounterItem
-          counter={counter}
-          availableCounters={props.availableCounters}
-          onDragComplete={handleDragComplete}
-          onDragReset={handleDragReset}
-          onDragStart={handleDragStart}
-        />
+        <CounterItem counter={counter} availableCounters={props.availableCounters} onChange={props.onChange} />
       ))}
     </div>
   );
@@ -47,35 +29,31 @@ function CounterItems(props: CounterItemsProps): React.ReactElement {
 interface CounterItemProps {
   counter: CounterType;
   availableCounters: CounterType[];
-  onDragStart: (optionId: string | number) => void;
-  onDragComplete: (optionId: string | number) => void;
-  onDragReset: () => void;
+  onChange: (newValue: CounterType[] | (Record<string, unknown> & { value: CounterType[] | undefined }) | undefined) => void;
 }
 
 function CounterItem(props: CounterItemProps): React.ReactElement {
-  const index = props.availableCounters.findIndex((counter) => props.counter === counter);
+  const [, drop] = useDrop(() => ({
+    accept: 'STATISTIC_COUNTER_SETTINGS_COUNTER_ITEM',
+    drop: (item: {id: string}) => {
+      const draggedIndex = props.availableCounters.findIndex((coutner) => coutner === item.id);
+      const droppedIndex = props.availableCounters.findIndex((coutner) => coutner === props.counter);
+      props.onChange(
+        props.availableCounters.map((counter, index) => {
+          if (index === draggedIndex) return props.counter;
+          else if (index === droppedIndex) return item.id;
+          return counter;
+        }) as CounterType[]
+      );
+    }
+  }));
 
-  const { drag, dragSourcePosition, drop, setIsDraggable } = useDrag({
+  const [, drag] = useDrag(() => ({
     type: 'STATISTIC_COUNTER_SETTINGS_COUNTER_ITEM',
-    index,
-    optionId: props.counter,
-    onDragStart: props.onDragStart,
-    onDragComplete: props.onDragComplete,
-    onDragReset: props.onDragReset
-  });
-
+    item: { id: props.counter }
+  }));
   return (
-    <div
-      className={[
-        'statistic-counter-item-container',
-        dragSourcePosition !== null && index < dragSourcePosition && 'drop-indicator-before',
-        dragSourcePosition !== null && index > dragSourcePosition && 'drop-indicator-after'
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      ref={(element) => drag(drop(element))}
-      onMouseEnter={() => setIsDraggable(true)}
-      onMouseLeave={() => setIsDraggable(false)}>
+    <div className={['statistic-counter-item-container'].filter(Boolean).join(' ')} ref={(element) => drag(drop(element))}>
       <div className='statistic-counter-item-pill'>
         <div className='drag-icon'>
           <svg aria-hidden='true' role='img' width='16' height='16' viewBox='0 0 4 14'>
@@ -223,7 +201,7 @@ function Settings(): React.ReactElement {
         {Messages.STATISTIC_COUNTER_VIEW_ORDER}
         {checkDefaultSettings().VIEW_ORDER && <ResetIcon onClick={handleViewOrderReset} />}
       </Text.Eyebrow>
-      <CounterItems availableCounters={useViewOrder.value} onChange={useViewOrder.onChange} />
+      <CounterItems key={JSON.stringify(useViewOrder.value)} availableCounters={useViewOrder.value} onChange={useViewOrder.onChange} />
       <Text.Eyebrow style={marginBottom15} color='header-secondary'>
         {Messages.STATISTIC_COUNTER_VISIBILITY}
         {checkDefaultSettings().VISIBILITY && <ResetIcon onClick={handleVisibilityReset} />}
